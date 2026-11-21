@@ -13,7 +13,7 @@
 | Verificación de KPI | Consultas SQL de `06-KPI` en Supabase | Cada KPI del dashboard frente a su consulta | 5 |
 | End-to-end asistidas | TestSprite | Flujos de usuario sobre la app desplegada | 10 |
 
-**BD de pruebas:** un segundo proyecto gratuito de Supabase (`ceiba-erp-test`), con los mismos roles. Las pruebas de integración nunca tocan la BD de demostración. Sus cadenas van en `DATABASE_URL_TEST` y `DIRECT_URL_TEST`, solo en el `.env` local.
+**BD de pruebas:** un esquema `test` dentro del mismo proyecto de Supabase, con los mismos roles y privilegios que `public`. Las pruebas de integración crean y limpian sus datos solo en ese esquema y nunca tocan los datos de demostración. Las cadenas van en `DATABASE_URL_TEST` y `DIRECT_URL_TEST` (las mismas credenciales con el parámetro `schema=test`), solo en el `.env` local. El plan gratuito de Supabase limita a dos proyectos activos, así que se descartó un proyecto separado.
 
 **Comandos previstos:** `npm run test` (unitarias), `npm run test:integracion` y `npm run test:todo`.
 

@@ -159,7 +159,7 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 | `GEMINI_API_KEY` | Clave de la API de Gemini | `.env` local y Railway |
 | `GEMINI_MODEL` | Modelo de Gemini (07-IAG §2) | `.env` local y Railway |
 | `SEED_DEMO_PASSWORD` | Contraseña de los usuarios de demostración | Solo `.env` local |
-| `DATABASE_URL_TEST` / `DIRECT_URL_TEST` | Cadenas de la BD de pruebas (`10-PRU` §1) | Solo `.env` local |
+| `DATABASE_URL_TEST` / `DIRECT_URL_TEST` | Mismas cadenas con `schema=test`, para el esquema de pruebas (`10-PRU` §1) | Solo `.env` local |
 | `APP_TIMEZONE` | `America/Bogota` | `.env` local y Railway |
 
 `.env.example` contiene estos nombres con valores de ejemplo y sin secretos.
