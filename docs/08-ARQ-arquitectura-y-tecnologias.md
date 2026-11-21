@@ -146,10 +146,22 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 - Se usa el *session pooler* porque Railway ejecuta un **servidor persistente**, no funciones *serverless*, y porque es compatible con IPv4.
 - El pool del adaptador `pg` se limita a 5 conexiones para respetar el límite del plan gratuito.
 - `DIRECT_URL` solo existe en el `.env` local del desarrollador. Railway **no** la recibe, así la aplicación desplegada no puede alterar el esquema.
+- **Esquema:** el parámetro `schema` de la URL (por defecto `public`; `test` para las pruebas) se pasa al adaptador de Prisma. Las consultas SQL directas (KPI) califican las tablas con ese esquema.
+- **TLS:** `src/server/conexion.ts` controla el cifrado. Si existe `certs/supabase-ca.crt` (certificado raíz público de Supabase), verifica el certificado del servidor; si no, cifra sin verificar. `sslmode=disable` solo se admite para una base local de desarrollo.
+- **Migraciones:** la migración inicial se genera con `prisma migrate diff` y se aplica con `prisma migrate deploy` en `public`, sin base *shadow*. Incluye las restricciones `CHECK` de `prisma/sql/restricciones.sql`. El esquema `test` se sincroniza con `prisma db push` más el mismo archivo de restricciones.
+- `npm run db:verificar` comprueba la conexión, las 17 tablas, las restricciones y que el rol de la aplicación **no** pueda crear tablas.
 
 ---
 
-## 5. Variables de entorno
+## 5. Decisiones de implementación de Next.js 16
+
+- **Proxy (antes *middleware*):** `src/proxy.ts` verifica el JWT y redirige a `/login` las páginas sin sesión; las API protegidas reciben 401. Es solo la primera barrera: cada Route Handler y cada página vuelve a verificar la sesión, el rol y que el usuario siga activo en la BD (`src/server/auth/autorizacion.ts`).
+- **Cache Components desactivado:** `create-next-app` 16 lo activa por defecto. Se desactivó porque casi todas las páginas del ERP dependen de la sesión y de datos transaccionales, así que el renderizado dinámico por solicitud es el comportamiento correcto.
+- **Navegación por rol:** `src/lib/navegacion.ts` define el menú y la página de inicio de cada rol. La misma tabla decide el acceso a las páginas en el servidor, y las rutas desconocidas se niegan por defecto.
+- **Validación:** Zod 4 con mensajes en español (`src/server/validacion/zod.ts`) y esquemas estrictos.
+- **Errores:** `src/server/errores.ts` convierte los errores de dominio, de Zod y de Prisma al formato uniforme de `04-REQ` §4.9, sin exponer trazas.
+
+## 6. Variables de entorno
 
 | Variable | Descripción | Dónde |
 |---|---|---|
@@ -157,9 +169,10 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 | `DIRECT_URL` | Cadena de conexión con el rol `prisma` | Solo `.env` local |
 | `JWT_SECRET` | Clave para firmar las sesiones (≥ 32 caracteres aleatorios) | `.env` local y Railway |
 | `GEMINI_API_KEY` | Clave de la API de Gemini | `.env` local y Railway |
-| `GEMINI_MODEL` | Modelo de Gemini (07-IAG §2) | `.env` local y Railway |
+| `GEMINI_MODEL` | Modelo de Gemini: `gemini-3.8-flash` (07-IAG §2) | `.env` local y Railway |
+| `DB_SSL_CA_PATH` | Ruta opcional del certificado raíz de la BD (por defecto `certs/supabase-ca.crt`) | Opcional |
 | `SEED_DEMO_PASSWORD` | Contraseña de los usuarios de demostración | Solo `.env` local |
-| `DATABASE_URL_TEST` / `DIRECT_URL_TEST` | Cadenas de la BD de pruebas (`10-PRU` §1) | Solo `.env` local |
+| `DATABASE_URL_TEST` / `DIRECT_URL_TEST` | Mismas cadenas con `schema=test`, para el esquema de pruebas (`10-PRU` §1) | Solo `.env` local |
 | `APP_TIMEZONE` | `America/Bogota` | `.env` local y Railway |
 
 `.env.example` contiene estos nombres con valores de ejemplo y sin secretos.
