@@ -11,7 +11,8 @@
     "db:generar": "prisma generate",
     "db:migrar": "prisma migrate deploy",
     "db:verificar": "tsx scripts/verificar-db.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@google/genai": "^3.6.1",
