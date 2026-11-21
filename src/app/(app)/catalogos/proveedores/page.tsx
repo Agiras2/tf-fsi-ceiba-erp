@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { protegerPagina } from "@/server/auth/autorizacion";
-import { EnConstruccion } from "@/components/layout/en-construccion";
+import { accionesPermitidas } from "@/lib/permisos";
+import { ModuloProveedores } from "./modulo-proveedores";
 
 export const metadata: Metadata = { title: "Proveedores" };
 
 export default async function Pagina() {
-  await protegerPagina("/catalogos/proveedores");
+  const sesion = await protegerPagina("/catalogos/proveedores");
   return (
-    <EnConstruccion
-      titulo="Proveedores"
-      fase={3}
-      descripcion="Gestión de proveedores y su tiempo de entrega."
-    />
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Proveedores</h1>
+        <p className="text-sm text-muted-foreground">Gestión de proveedores y su tiempo de entrega.</p>
+      </div>
+      <ModuloProveedores acciones={accionesPermitidas("proveedores", sesion.rol)} />
+    </div>
   );
 }
