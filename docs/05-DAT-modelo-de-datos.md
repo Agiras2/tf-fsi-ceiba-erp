@@ -278,7 +278,7 @@ El script `prisma/seed.ts` (catálogos en `prisma/seed-datos.ts`) usa una semill
 2. **Agotados:** combinaciones con stock 0. Tres son sembradas (frijol en Envigado, suavizante en Laureles y salchicha en Bello, sin reposición en los últimos 30 días); además puede agotarse algún producto del proveedor impuntual.
 3. **Baja rotación y sobrestock:** 6 productos de muy baja demanda (quinua, aceite de oliva, vinagre balsámico, ambientador premium, champú anticaspa premium y crema facial) con existencias muy por encima del máximo.
 4. **Sucursal de bajo desempeño:** Ceiba Bello vende cerca de la mitad del promedio de las demás.
-5. **Proveedor impuntual:** Distribuidora Andina de Alimentos entrega a tiempo cerca del 55 % de sus pedidos, frente a 88–98 % de los demás.
+5. **Proveedor impuntual:** Distribuidora Andina de Alimentos entrega a tiempo cerca de la mitad de sus pedidos (47 % en la carga de referencia), frente a 85–97 % de los demás.
 6. **Tendencias:** más ventas en fines de semana y crecimiento de la categoría Bebidas (hasta +60 %) en las últimas 5 semanas.
 7. **Clientes recurrentes:** entre el 30 % y el 55 % de las ventas tienen cliente identificado, según la sucursal; cerca de la mitad de los clientes activos en un mes compra más de una vez.
 8. **Órdenes en todos los estados**, incluidas algunas aprobadas con la fecha esperada vencida y sin recibir.

@@ -153,7 +153,15 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 
 ---
 
-## 5. Variables de entorno
+## 5. Decisiones de implementación de Next.js 16
+
+- **Proxy (antes *middleware*):** `src/proxy.ts` verifica el JWT y redirige a `/login` las páginas sin sesión; las API protegidas reciben 401. Es solo la primera barrera: cada Route Handler y cada página vuelve a verificar la sesión, el rol y que el usuario siga activo en la BD (`src/server/auth/autorizacion.ts`).
+- **Cache Components desactivado:** `create-next-app` 16 lo activa por defecto. Se desactivó porque casi todas las páginas del ERP dependen de la sesión y de datos transaccionales, así que el renderizado dinámico por solicitud es el comportamiento correcto.
+- **Navegación por rol:** `src/lib/navegacion.ts` define el menú y la página de inicio de cada rol. La misma tabla decide el acceso a las páginas en el servidor, y las rutas desconocidas se niegan por defecto.
+- **Validación:** Zod 4 con mensajes en español (`src/server/validacion/zod.ts`) y esquemas estrictos.
+- **Errores:** `src/server/errores.ts` convierte los errores de dominio, de Zod y de Prisma al formato uniforme de `04-REQ` §4.9, sin exponer trazas.
+
+## 6. Variables de entorno
 
 | Variable | Descripción | Dónde |
 |---|---|---|
