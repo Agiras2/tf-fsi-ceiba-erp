@@ -37,13 +37,13 @@ El código se usa también para referenciar elementos internos de cada documento
 | 01 | PLN | [01-PLN-plan-de-accion.md](01-PLN-plan-de-accion.md) | Fases, entregables, criterios de aceptación, capturas y versiones | ✅ |
 | 02 | GIT | [02-GIT-convenciones-gitflow.md](02-GIT-convenciones-gitflow.md) | Ramas, commits, etiquetas y comandos del flujo de trabajo | ✅ |
 | 03 | NEG | [03-NEG-negocio-y-flujo.md](03-NEG-negocio-y-flujo.md) | Organización, problema, justificación del ERP, roles, módulos y flujos de negocio | ✅ |
-| 04 | REQ | `04-REQ-requisitos.md` | Requisitos funcionales y no funcionales, reglas de negocio, endpoints y fuera de alcance | ⏳ Fase 1 |
-| 05 | DAT | `05-DAT-modelo-de-datos.md` | Entidades, diagrama entidad-relación, diccionario de datos y datos de demostración | ⏳ Fase 1 |
-| 06 | KPI | `06-KPI-indicadores.md` | Ficha de cada KPI: definición, fórmula, periodo, fuente y consulta | ⏳ Fase 1 |
-| 07 | IAG | `07-IAG-chatbot-y-agentes.md` | Herramientas, instrucciones de sistema, interacción, trazabilidad y transparencia de IA | ⏳ Fase 1 |
-| 08 | ARQ | `08-ARQ-arquitectura-y-tecnologias.md` | Capas, estructura de carpetas, tecnologías y su justificación | ⏳ Fase 1 |
-| 09 | SEG | `09-SEG-seguridad.md` | Autenticación, autorización, credenciales y privilegios en la base de datos | ⏳ Fase 1 |
-| 10 | PRU | `10-PRU-plan-de-pruebas.md` | Pruebas automatizadas, de seguridad, del chatbot y con TestSprite | ⏳ Fase 1 |
+| 04 | REQ | [04-REQ-requisitos.md](04-REQ-requisitos.md) | Requisitos funcionales y no funcionales, reglas de negocio, endpoints y fuera de alcance | ✅ |
+| 05 | DAT | [05-DAT-modelo-de-datos.md](05-DAT-modelo-de-datos.md) | Entidades, diagrama entidad-relación, diccionario de datos y datos de demostración | ✅ |
+| 06 | KPI | [06-KPI-indicadores.md](06-KPI-indicadores.md) | Ficha de cada KPI: definición, fórmula, periodo, fuente y consulta | ✅ |
+| 07 | IAG | [07-IAG-chatbot-y-agentes.md](07-IAG-chatbot-y-agentes.md) | Herramientas, instrucciones de sistema, interacción, trazabilidad y transparencia de IA | ✅ |
+| 08 | ARQ | [08-ARQ-arquitectura-y-tecnologias.md](08-ARQ-arquitectura-y-tecnologias.md) | Capas, estructura de carpetas, tecnologías y su justificación | ✅ |
+| 09 | SEG | [09-SEG-seguridad.md](09-SEG-seguridad.md) | Autenticación, autorización, credenciales y privilegios en la base de datos | ✅ |
+| 10 | PRU | [10-PRU-plan-de-pruebas.md](10-PRU-plan-de-pruebas.md) | Pruebas automatizadas, de seguridad, del chatbot y con TestSprite | ✅ |
 | 11 | DEP | `11-DEP-despliegue.md` | Supabase, Railway, variables de entorno y mantenimiento | ⏳ Fase 9 |
 | 12 | MAT | [12-MAT-matriz-de-cumplimiento.md](12-MAT-matriz-de-cumplimiento.md) | Cada exigencia de la guía → cómo se cumple → fase → evidencia | 🟡 Se actualiza en cada fase |
 | 13 | PRM | `13-PRM-historial-de-prompts.md` | Prompts usados con GitHub Copilot y Claude durante el desarrollo | ⏳ Fase 11 |
