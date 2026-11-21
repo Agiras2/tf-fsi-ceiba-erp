@@ -34,3 +34,9 @@ export function accionesPermitidas(recurso: RecursoCrud, rol: Rol) {
     eliminar: p.eliminar.includes(rol),
   };
 }
+
+/** Indica si el rol puede consultar un recurso (por ejemplo, para cargar opciones de filtros). */
+export function puedeLeer(recurso: RecursoCrud, rol: Rol): boolean {
+  const p: PermisosCrud = PERMISOS[recurso];
+  return p.leer.includes(rol);
+}

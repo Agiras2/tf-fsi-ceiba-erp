@@ -19,21 +19,39 @@ import type { Pagina } from "@/lib/esquemas/comunes";
 import { FormularioProducto } from "./formulario-producto";
 import type { Acciones, Opcion, Producto } from "./tipos";
 
-/** Carga una lista corta de opciones activas para selects (categorias, proveedores). */
-function useOpciones(url: string) {
+/**
+ * Carga una lista corta de opciones activas para selects (categorias, proveedores).
+ * Solo consulta si el rol tiene permiso de lectura sobre ese recurso (DEF-01).
+ */
+function useOpciones(url: string, habilitado: boolean) {
   const [opciones, setOpciones] = useState<Opcion[]>([]);
   useEffect(() => {
+    if (!habilitado) return;
+    let cancelado = false;
     api<Pagina<Opcion>>(`${url}?activo=true&tamano=100`)
-      .then((r) => setOpciones(r.datos))
-      .catch(() => toast.error("No fue posible cargar las opciones del formulario."));
-  }, [url]);
+      .then((r) => {
+        if (!cancelado) setOpciones(r.datos);
+      })
+      .catch(() => {
+        if (!cancelado) toast.error("No fue posible cargar las opciones de categorías o proveedores.");
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [url, habilitado]);
   return opciones;
 }
 
-export function ModuloProductos({ acciones }: { acciones: Acciones }) {
+export function ModuloProductos({
+  acciones, verCategorias, verProveedores,
+}: {
+  acciones: Acciones;
+  verCategorias: boolean;
+  verProveedores: boolean;
+}) {
   const listado = useListado<Producto>("/api/productos", { activo: "true", categoriaId: "todos", proveedorId: "todos" });
-  const categorias = useOpciones("/api/categorias");
-  const proveedores = useOpciones("/api/proveedores");
+  const categorias = useOpciones("/api/categorias", verCategorias);
+  const proveedores = useOpciones("/api/proveedores", verProveedores);
   const [formulario, setFormulario] = useState<{ abierto: boolean; producto: Producto | null }>({ abierto: false, producto: null });
   const [aDesactivar, setADesactivar] = useState<Producto | null>(null);
 
@@ -67,18 +85,22 @@ export function ModuloProductos({ acciones }: { acciones: Acciones }) {
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Buscador valor={listado.busqueda} onCambio={listado.setBusqueda} placeholder="Buscar por SKU o nombre" />
-            <NativeSelect value={listado.filtros.categoriaId} onChange={(e) => listado.setFiltro("categoriaId", e.target.value)} aria-label="Filtrar por categoría">
-              <NativeSelectOption value="todos">Todas las categorías</NativeSelectOption>
-              {categorias.map((c) => (
-                <NativeSelectOption key={c.id} value={c.id}>{c.nombre}</NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <NativeSelect value={listado.filtros.proveedorId} onChange={(e) => listado.setFiltro("proveedorId", e.target.value)} aria-label="Filtrar por proveedor">
-              <NativeSelectOption value="todos">Todos los proveedores</NativeSelectOption>
-              {proveedores.map((p) => (
-                <NativeSelectOption key={p.id} value={p.id}>{p.nombre}</NativeSelectOption>
-              ))}
-            </NativeSelect>
+            {verCategorias && (
+              <NativeSelect value={listado.filtros.categoriaId} onChange={(e) => listado.setFiltro("categoriaId", e.target.value)} aria-label="Filtrar por categoría">
+                <NativeSelectOption value="todos">Todas las categorías</NativeSelectOption>
+                {categorias.map((c) => (
+                  <NativeSelectOption key={c.id} value={c.id}>{c.nombre}</NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
+            {verProveedores && (
+              <NativeSelect value={listado.filtros.proveedorId} onChange={(e) => listado.setFiltro("proveedorId", e.target.value)} aria-label="Filtrar por proveedor">
+                <NativeSelectOption value="todos">Todos los proveedores</NativeSelectOption>
+                {proveedores.map((p) => (
+                  <NativeSelectOption key={p.id} value={p.id}>{p.nombre}</NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
             <NativeSelect value={listado.filtros.activo} onChange={(e) => listado.setFiltro("activo", e.target.value)} aria-label="Filtrar por estado">
               <NativeSelectOption value="true">Activos</NativeSelectOption>
               <NativeSelectOption value="false">Inactivos</NativeSelectOption>

@@ -4,7 +4,7 @@
 // ============================================================
 import type { Metadata } from "next";
 import { protegerPagina } from "@/server/auth/autorizacion";
-import { accionesPermitidas } from "@/lib/permisos";
+import { accionesPermitidas, puedeLeer } from "@/lib/permisos";
 import { ModuloProductos } from "./modulo-productos";
 
 export const metadata: Metadata = { title: "Productos" };
@@ -17,7 +17,11 @@ export default async function Pagina() {
         <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
         <p className="text-sm text-muted-foreground">Catálogo de productos con su categoría, proveedor principal, costo y precio.</p>
       </div>
-      <ModuloProductos acciones={accionesPermitidas("productos", sesion.rol)} />
+      <ModuloProductos
+        acciones={accionesPermitidas("productos", sesion.rol)}
+        verCategorias={puedeLeer("categorias", sesion.rol)}
+        verProveedores={puedeLeer("proveedores", sesion.rol)}
+      />
     </div>
   );
 }

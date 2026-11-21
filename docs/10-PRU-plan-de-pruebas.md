@@ -111,7 +111,7 @@ try {
 
 | ID | Prueba | Descripción | Clasificación | Corrección | Commit | Estado |
 |---|---|---|---|---|---|---|
-| DEF-01 | | | | | | |
+| DEF-01 | Prueba manual (Fase 3A), cajero en Productos | Al abrir Productos con el rol Cajero aparecía tres veces "No fue posible cargar las opciones del formulario": la pantalla pedía categorías y proveedores, que el cajero no puede consultar (403) | Defecto funcional | Las opciones se cargan solo si el rol tiene permiso de lectura (`puedeLeer` en `src/lib/permisos.ts`); para el cajero se ocultan esos filtros. Prueba unitaria agregada | `fix(catalogos): ...` | Corregido |
 
 ## 8. Criterios de salida
 

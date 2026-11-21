@@ -5,6 +5,7 @@ import {
 } from "@/lib/esquemas/catalogos";
 import { esquemaListado } from "@/lib/esquemas/comunes";
 import { cambios } from "@/server/servicios/comun";
+import { accionesPermitidas, puedeLeer } from "@/lib/permisos";
 
 const productoValido = {
   sku: "aba-099", nombre: "Arroz integral 1 kg", categoriaId: "1", proveedorId: "2", unidad: "unidad", costo: "4200", precio: "5600",
@@ -78,5 +79,17 @@ describe("Utilidades", () => {
 
   it("detecta solo los campos que cambiaron", () => {
     expect(cambios({ nombre: "A", activo: true }, { nombre: "B", activo: true })).toEqual({ nombre: { antes: "A", despues: "B" } });
+  });
+});
+
+describe("Permisos de catalogos (DEF-01)", () => {
+  it("el cajero consulta productos pero no categorias ni proveedores", () => {
+    expect(puedeLeer("productos", "CAJERO")).toBe(true);
+    expect(puedeLeer("categorias", "CAJERO")).toBe(false);
+    expect(puedeLeer("proveedores", "CAJERO")).toBe(false);
+  });
+
+  it("el cajero crea clientes pero no los edita ni elimina", () => {
+    expect(accionesPermitidas("clientes", "CAJERO")).toEqual({ crear: true, editar: false, eliminar: false });
   });
 });
