@@ -33,8 +33,8 @@ flowchart LR
     CH & A1 & A2 --> GM["Gemini API<br/>function calling"]
 ```
 
-- **Proveedor de IA:** Google Gemini mediante el SDK `@google/genai`, con llamadas a funciones. El modelo se define en la variable `GEMINI_MODEL` (un modelo Flash con nivel gratuito; se fija en la Fase 6 según los límites vigentes en AI Studio).
-- **Parámetros:** temperatura 0,2, máximo 5 rondas de llamadas a herramientas por solicitud, tiempo límite de 30 s.
+- **Proveedor de IA:** Google Gemini mediante el SDK `@google/genai`, con llamadas a funciones. El modelo se define en la variable `GEMINI_MODEL`; se usa **`gemini-3.8-flash`**, que admite llamadas a funciones y tiene nivel gratuito en AI Studio.
+- **Parámetros:** nivel de razonamiento (*thinking level*) bajo para el chatbot y medio para los agentes, máximo 5 rondas de llamadas a herramientas por solicitud y tiempo límite de 30 s. Los modelos Gemini 3 y posteriores ya no usan `temperature`, `top_p` ni `top_k`, y cada respuesta de función debe incluir el identificador y el nombre de la llamada.
 - **Salidas estructuradas de los agentes:** después de las rondas de herramientas, una llamada final sin herramientas con `responseMimeType: application/json` y un esquema; el servidor valida la respuesta con Zod antes de usarla.
 
 ---

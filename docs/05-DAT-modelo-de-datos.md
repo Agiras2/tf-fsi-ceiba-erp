@@ -256,28 +256,31 @@ Llave única compuesta: (`productoId`, `sucursalId`).
 
 ## 5. Datos de demostración (*seed*)
 
-El script `prisma/seed.ts` usa una semilla aleatoria fija: siempre produce los mismos datos, con las fechas relativas al día de ejecución. Simula la operación **en orden cronológico**, de modo que el stock final, el kardex, las ventas y las órdenes son coherentes entre sí.
+El script `prisma/seed.ts` (catálogos en `prisma/seed-datos.ts`) usa una semilla aleatoria fija: siempre produce los mismos datos, con las fechas relativas al día de ejecución (zona `America/Bogota`). Simula la operación **en orden cronológico**: recepciones de mercancía a las 07:30, ventas durante el día y reposición automática a las 18:00 para los productos en o bajo el mínimo. Así, el stock final, el kardex, las ventas y las órdenes son coherentes entre sí.
 
-| Elemento | Cantidad aproximada |
+**Ejecución:** `npm run db:seed` carga la BD de demostración (`DATABASE_URL`). Con `SEED_DESTINO=test` carga el esquema de pruebas (`DATABASE_URL_TEST`). **Borra todos los datos del esquema de destino antes de cargar.** Usa el rol `ceiba_app`; los identificadores de ventas y órdenes se reservan con `nextval`, sin privilegios adicionales.
+
+| Elemento | Cantidad (ejecución de referencia) |
 |---|---|
 | Sucursales | 4 |
-| Usuarios de demostración | 1 ADMIN, 1 GERENTE, 4 BODEGA (uno por sucursal), 4 CAJERO (uno por sucursal) |
+| Usuarios de demostración | 10: 1 ADMIN, 1 GERENTE, 4 BODEGA y 4 CAJERO (uno de cada uno por sucursal), con correos `@ceiba.test` |
 | Categorías | 8 |
-| Proveedores | 8 |
+| Proveedores | 8, con tiempos de entrega de 2 a 6 días |
 | Productos | 60 |
-| Clientes ficticios | 200 |
-| Historial de ventas | 90 días, entre 15 y 40 ventas diarias por sucursal |
-| Órdenes de compra | ~40 históricas en distintos estados |
+| Clientes ficticios | 800 |
+| Ventas | ≈ 10 000 en 90 días (≈ 80 anuladas), entre 15 y 50 diarias por sucursal |
+| Órdenes de compra | ≈ 880: recibidas, aprobadas en tránsito, 2 en borrador y 2 canceladas |
+| Movimientos de kardex | ≈ 26 000 |
 
 **Casos sembrados a propósito**, para que los KPI y los agentes tengan hallazgos verificables:
 
-1. **Riesgo de agotamiento:** unos 5 productos de alta demanda con cobertura menor al tiempo de entrega de su proveedor.
-2. **Agotados:** unos 3 productos con stock 0 en alguna sucursal.
-3. **Baja rotación y sobrestock:** unos 6 productos con pocas ventas y stock por encima del máximo.
-4. **Sucursal de bajo desempeño:** Ceiba Bello vende alrededor de un 40 % menos que el promedio.
-5. **Proveedor impuntual:** un proveedor entrega tarde aproximadamente la mitad de sus pedidos.
-6. **Tendencias:** fines de semana con más ventas y una categoría (bebidas) con crecimiento en las últimas semanas.
-7. **Clientes recurrentes:** cerca del 40 % de las ventas tienen cliente identificado, y una parte de esos clientes compra varias veces.
-8. **Órdenes en todos los estados:** recibidas (a tiempo y tarde), aprobadas pendientes, en borrador y canceladas.
+1. **Riesgo de agotamiento:** 5 productos de alta demanda (arroz, aceite de girasol, café, leche y huevos) sin reposición en los últimos 12 días. Terminan con una cobertura cercana a la mitad del tiempo de entrega, ajustada con un conteo físico registrado en el kardex.
+2. **Agotados:** combinaciones con stock 0. Tres son sembradas (frijol en Envigado, suavizante en Laureles y salchicha en Bello, sin reposición en los últimos 30 días); además puede agotarse algún producto del proveedor impuntual.
+3. **Baja rotación y sobrestock:** 6 productos de muy baja demanda (quinua, aceite de oliva, vinagre balsámico, ambientador premium, champú anticaspa premium y crema facial) con existencias muy por encima del máximo.
+4. **Sucursal de bajo desempeño:** Ceiba Bello vende cerca de la mitad del promedio de las demás.
+5. **Proveedor impuntual:** Distribuidora Andina de Alimentos entrega a tiempo cerca de la mitad de sus pedidos (47 % en la carga de referencia), frente a 85–97 % de los demás.
+6. **Tendencias:** más ventas en fines de semana y crecimiento de la categoría Bebidas (hasta +60 %) en las últimas 5 semanas.
+7. **Clientes recurrentes:** entre el 30 % y el 55 % de las ventas tienen cliente identificado, según la sucursal; cerca de la mitad de los clientes activos en un mes compra más de una vez.
+8. **Órdenes en todos los estados**, incluidas algunas aprobadas con la fecha esperada vencida y sin recibir.
 
-**Contraseñas de demostración:** el *seed* las toma de la variable de entorno `SEED_DEMO_PASSWORD`. No quedan escritas en el repositorio y se entregan solo en el informe.
+**Contraseñas de demostración:** el *seed* las toma de la variable de entorno `SEED_DEMO_PASSWORD` (al menos 10 caracteres, con letras y números). No quedan escritas en el repositorio y se entregan solo en el informe.
