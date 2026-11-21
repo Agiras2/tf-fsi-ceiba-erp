@@ -1,0 +1,480 @@
+// ============================================================
+// CeibaERP - Modelo de datos (docs/05-DAT-modelo-de-datos.md)
+// Codigo: camelCase. Base de datos: snake_case (@@map / @map).
+// La URL de conexion se define en prisma.config.ts (Prisma 7).
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ------------------------------------------------------------
+// Enumeraciones
+// ------------------------------------------------------------
+
+enum Rol {
+  ADMIN
+  GERENTE
+  BODEGA
+  CAJERO
+}
+
+enum MedioPago {
+  EFECTIVO
+  TARJETA_DEBITO
+  TARJETA_CREDITO
+  TRANSFERENCIA
+}
+
+enum EstadoVenta {
+  REGISTRADA
+  ANULADA
+}
+
+enum EstadoOrdenCompra {
+  BORRADOR
+  APROBADA
+  RECIBIDA
+  CANCELADA
+}
+
+enum OrigenOrdenCompra {
+  MANUAL
+  AGENTE_INVENTARIO
+}
+
+enum TipoMovimiento {
+  CARGA_INICIAL
+  VENTA
+  ANULACION_VENTA
+  RECEPCION_COMPRA
+  AJUSTE_ENTRADA
+  AJUSTE_SALIDA
+}
+
+enum TipoAgente {
+  INVENTARIO
+  COMERCIAL
+  INFORME_EJECUTIVO
+}
+
+enum EstadoEjecucion {
+  EN_CURSO
+  COMPLETADA
+  FALLIDA
+}
+
+enum TipoRecomendacion {
+  REPOSICION
+  PROMOCION
+  LIQUIDACION
+  REVISION_SUCURSAL
+  OTRA
+}
+
+enum Prioridad {
+  ALTA
+  MEDIA
+  BAJA
+}
+
+enum EstadoRecomendacion {
+  PENDIENTE
+  ACEPTADA
+  DESCARTADA
+}
+
+enum RolMensaje {
+  USUARIO
+  ASISTENTE
+}
+
+// ------------------------------------------------------------
+// Organizacion y usuarios
+// ------------------------------------------------------------
+
+model Sucursal {
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique @db.VarChar(10)
+  nombre    String   @db.VarChar(80)
+  ciudad    String   @db.VarChar(60)
+  direccion String   @db.VarChar(120)
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  usuarios     Usuario[]
+  inventarios  Inventario[]
+  movimientos  MovimientoInventario[]
+  ventas       Venta[]
+  ordenes      OrdenCompra[]
+  recomendaciones Recomendacion[]
+
+  @@map("sucursal")
+}
+
+model Usuario {
+  id           Int       @id @default(autoincrement())
+  nombre       String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(120)
+  passwordHash String    @map("password_hash") @db.VarChar(100)
+  rol          Rol
+  sucursalId   Int?      @map("sucursal_id")
+  activo       Boolean   @default(true)
+  ultimoAcceso DateTime? @map("ultimo_acceso") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+
+  ventasRegistradas   Venta[]                @relation("VentaCajero")
+  ventasAnuladas      Venta[]                @relation("VentaAnuladaPor")
+  ordenesCreadas      OrdenCompra[]          @relation("OrdenCreadaPor")
+  ordenesAprobadas    OrdenCompra[]          @relation("OrdenAprobadaPor")
+  ordenesRecibidas    OrdenCompra[]          @relation("OrdenRecibidaPor")
+  movimientos         MovimientoInventario[]
+  ejecuciones         EjecucionAgente[]
+  recomendacionesDecididas Recomendacion[]
+  conversaciones      Conversacion[]
+  auditorias          Auditoria[]
+
+  @@index([sucursalId])
+  @@map("usuario")
+}
+
+// ------------------------------------------------------------
+// Catalogos
+// ------------------------------------------------------------
+
+model Categoria {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique @db.VarChar(60)
+  descripcion String?  @db.VarChar(200)
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  productos Producto[]
+
+  @@map("categoria")
+}
+
+model Proveedor {
+  id                Int      @id @default(autoincrement())
+  nit               String   @unique @db.VarChar(20)
+  nombre            String   @db.VarChar(120)
+  contacto          String?  @db.VarChar(100)
+  telefono          String?  @db.VarChar(30)
+  email             String?  @db.VarChar(120)
+  tiempoEntregaDias Int      @map("tiempo_entrega_dias")
+  activo            Boolean  @default(true)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  productos Producto[]
+  ordenes   OrdenCompra[]
+
+  @@map("proveedor")
+}
+
+model Producto {
+  id          Int      @id @default(autoincrement())
+  sku         String   @unique @db.VarChar(20)
+  nombre      String   @db.VarChar(120)
+  descripcion String?  @db.VarChar(300)
+  categoriaId Int      @map("categoria_id")
+  proveedorId Int      @map("proveedor_id")
+  unidad      String   @db.VarChar(20)
+  costo       Decimal  @db.Decimal(14, 2)
+  precio      Decimal  @db.Decimal(14, 2)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  proveedor Proveedor @relation(fields: [proveedorId], references: [id], onDelete: Restrict)
+
+  inventarios        Inventario[]
+  movimientos        MovimientoInventario[]
+  detallesVenta      DetalleVenta[]
+  detallesOrden      DetalleOrdenCompra[]
+  recomendaciones    Recomendacion[]
+
+  @@index([categoriaId])
+  @@index([proveedorId])
+  @@map("producto")
+}
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  documento String   @unique @db.VarChar(20)
+  nombre    String   @db.VarChar(120)
+  email     String?  @db.VarChar(120)
+  telefono  String?  @db.VarChar(30)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  ventas Venta[]
+
+  @@map("cliente")
+}
+
+// ------------------------------------------------------------
+// Inventario
+// ------------------------------------------------------------
+
+model Inventario {
+  id          Int      @id @default(autoincrement())
+  productoId  Int      @map("producto_id")
+  sucursalId  Int      @map("sucursal_id")
+  stock       Int      @default(0)
+  stockMinimo Int      @map("stock_minimo")
+  stockMaximo Int      @map("stock_maximo")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+
+  @@unique([productoId, sucursalId])
+  @@index([sucursalId])
+  @@map("inventario")
+}
+
+model MovimientoInventario {
+  id              Int            @id @default(autoincrement())
+  productoId      Int            @map("producto_id")
+  sucursalId      Int            @map("sucursal_id")
+  tipo            TipoMovimiento
+  cantidad        Int
+  stockResultante Int            @map("stock_resultante")
+  referenciaTipo  String?        @map("referencia_tipo") @db.VarChar(30)
+  referenciaId    Int?           @map("referencia_id")
+  motivo          String?        @db.VarChar(200)
+  usuarioId       Int?           @map("usuario_id")
+  fecha           DateTime       @default(now()) @db.Timestamptz(6)
+
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  usuario  Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([productoId, sucursalId, fecha])
+  @@index([fecha])
+  @@map("movimiento_inventario")
+}
+
+// ------------------------------------------------------------
+// Ventas
+// ------------------------------------------------------------
+
+model Venta {
+  id              Int         @id @default(autoincrement())
+  sucursalId      Int         @map("sucursal_id")
+  cajeroId        Int         @map("cajero_id")
+  clienteId       Int?        @map("cliente_id")
+  fecha           DateTime    @default(now()) @db.Timestamptz(6)
+  medioPago       MedioPago   @map("medio_pago")
+  estado          EstadoVenta @default(REGISTRADA)
+  total           Decimal     @db.Decimal(14, 2)
+  costoTotal      Decimal     @map("costo_total") @db.Decimal(14, 2)
+  anuladaPorId    Int?        @map("anulada_por_id")
+  fechaAnulacion  DateTime?   @map("fecha_anulacion") @db.Timestamptz(6)
+  motivoAnulacion String?     @map("motivo_anulacion") @db.VarChar(200)
+
+  sucursal   Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cajero     Usuario  @relation("VentaCajero", fields: [cajeroId], references: [id], onDelete: Restrict)
+  cliente    Cliente? @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  anuladaPor Usuario? @relation("VentaAnuladaPor", fields: [anuladaPorId], references: [id], onDelete: Restrict)
+
+  detalles DetalleVenta[]
+
+  @@index([sucursalId, fecha])
+  @@index([fecha])
+  @@index([clienteId])
+  @@map("venta")
+}
+
+model DetalleVenta {
+  id             Int     @id @default(autoincrement())
+  ventaId        Int     @map("venta_id")
+  productoId     Int     @map("producto_id")
+  cantidad       Int
+  precioUnitario Decimal @map("precio_unitario") @db.Decimal(14, 2)
+  costoUnitario  Decimal @map("costo_unitario") @db.Decimal(14, 2)
+  subtotal       Decimal @db.Decimal(14, 2)
+
+  venta    Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+
+  @@index([ventaId])
+  @@index([productoId])
+  @@map("detalle_venta")
+}
+
+// ------------------------------------------------------------
+// Compras
+// ------------------------------------------------------------
+
+model OrdenCompra {
+  id                Int               @id @default(autoincrement())
+  proveedorId       Int               @map("proveedor_id")
+  sucursalId        Int               @map("sucursal_id")
+  estado            EstadoOrdenCompra @default(BORRADOR)
+  origen            OrigenOrdenCompra @default(MANUAL)
+  ejecucionAgenteId Int?              @map("ejecucion_agente_id")
+  creadaPorId       Int?              @map("creada_por_id")
+  aprobadaPorId     Int?              @map("aprobada_por_id")
+  recibidaPorId     Int?              @map("recibida_por_id")
+  fechaAprobacion   DateTime?         @map("fecha_aprobacion") @db.Timestamptz(6)
+  fechaEsperada     DateTime          @map("fecha_esperada") @db.Date
+  fechaRecepcion    DateTime?         @map("fecha_recepcion") @db.Date
+  motivoCancelacion String?           @map("motivo_cancelacion") @db.VarChar(200)
+  total             Decimal           @default(0) @db.Decimal(14, 2)
+  observaciones     String?           @db.VarChar(500)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  proveedor       Proveedor        @relation(fields: [proveedorId], references: [id], onDelete: Restrict)
+  sucursal        Sucursal         @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  ejecucionAgente EjecucionAgente? @relation(fields: [ejecucionAgenteId], references: [id], onDelete: Restrict)
+  creadaPor       Usuario?         @relation("OrdenCreadaPor", fields: [creadaPorId], references: [id], onDelete: Restrict)
+  aprobadaPor     Usuario?         @relation("OrdenAprobadaPor", fields: [aprobadaPorId], references: [id], onDelete: Restrict)
+  recibidaPor     Usuario?         @relation("OrdenRecibidaPor", fields: [recibidaPorId], references: [id], onDelete: Restrict)
+
+  detalles DetalleOrdenCompra[]
+
+  @@index([estado])
+  @@index([sucursalId, estado])
+  @@index([proveedorId])
+  @@index([fechaEsperada])
+  @@map("orden_compra")
+}
+
+model DetalleOrdenCompra {
+  id            Int     @id @default(autoincrement())
+  ordenCompraId Int     @map("orden_compra_id")
+  productoId    Int     @map("producto_id")
+  cantidad      Int
+  costoUnitario Decimal @map("costo_unitario") @db.Decimal(14, 2)
+  subtotal      Decimal @db.Decimal(14, 2)
+
+  ordenCompra OrdenCompra @relation(fields: [ordenCompraId], references: [id], onDelete: Cascade)
+  producto    Producto    @relation(fields: [productoId], references: [id], onDelete: Restrict)
+
+  @@index([ordenCompraId])
+  @@index([productoId])
+  @@map("detalle_orden_compra")
+}
+
+// ------------------------------------------------------------
+// Inteligencia artificial
+// ------------------------------------------------------------
+
+model EjecucionAgente {
+  id                 Int             @id @default(autoincrement())
+  agente             TipoAgente
+  estado             EstadoEjecucion @default(EN_CURSO)
+  parametros         Json            @default("{}")
+  herramientasUsadas Json            @default("[]") @map("herramientas_usadas")
+  resultado          Json?
+  resumen            String?
+  modelo             String?         @db.VarChar(60)
+  duracionMs         Int?            @map("duracion_ms")
+  error              String?
+  ejecutadoPorId     Int             @map("ejecutado_por_id")
+  ejecucionPadreId   Int?            @map("ejecucion_padre_id")
+  ejecucionEntradaId Int?            @map("ejecucion_entrada_id")
+  fechaInicio        DateTime        @default(now()) @map("fecha_inicio") @db.Timestamptz(6)
+  fechaFin           DateTime?       @map("fecha_fin") @db.Timestamptz(6)
+
+  ejecutadoPor     Usuario          @relation(fields: [ejecutadoPorId], references: [id], onDelete: Restrict)
+  ejecucionPadre   EjecucionAgente? @relation("EjecucionPadre", fields: [ejecucionPadreId], references: [id], onDelete: Restrict)
+  hijas            EjecucionAgente[] @relation("EjecucionPadre")
+  ejecucionEntrada EjecucionAgente? @relation("EjecucionEntrada", fields: [ejecucionEntradaId], references: [id], onDelete: Restrict)
+  consumidaPor     EjecucionAgente[] @relation("EjecucionEntrada")
+
+  ordenes         OrdenCompra[]
+  recomendaciones Recomendacion[]
+
+  @@index([agente, fechaInicio])
+  @@map("ejecucion_agente")
+}
+
+model Recomendacion {
+  id                 Int                 @id @default(autoincrement())
+  ejecucionId        Int                 @map("ejecucion_id")
+  tipo               TipoRecomendacion
+  prioridad          Prioridad
+  productoId         Int?                @map("producto_id")
+  sucursalId         Int?                @map("sucursal_id")
+  titulo             String              @db.VarChar(150)
+  justificacion      String
+  estado             EstadoRecomendacion @default(PENDIENTE)
+  decididaPorId      Int?                @map("decidida_por_id")
+  fechaDecision      DateTime?           @map("fecha_decision") @db.Timestamptz(6)
+  comentarioDecision String?             @map("comentario_decision") @db.VarChar(300)
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  ejecucion   EjecucionAgente @relation(fields: [ejecucionId], references: [id], onDelete: Restrict)
+  producto    Producto?       @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  sucursal    Sucursal?       @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  decididaPor Usuario?        @relation(fields: [decididaPorId], references: [id], onDelete: Restrict)
+
+  @@index([estado])
+  @@index([ejecucionId])
+  @@map("recomendacion")
+}
+
+model Conversacion {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int      @map("usuario_id")
+  titulo    String   @db.VarChar(120)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  usuario  Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  mensajes MensajeChat[]
+
+  @@index([usuarioId])
+  @@map("conversacion")
+}
+
+model MensajeChat {
+  id                 Int        @id @default(autoincrement())
+  conversacionId     Int        @map("conversacion_id")
+  rol                RolMensaje
+  contenido          String
+  herramientasUsadas Json?      @map("herramientas_usadas")
+  modelo             String?    @db.VarChar(60)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conversacion Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  @@index([conversacionId])
+  @@map("mensaje_chat")
+}
+
+// ------------------------------------------------------------
+// Auditoria
+// ------------------------------------------------------------
+
+model Auditoria {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int?     @map("usuario_id")
+  accion    String   @db.VarChar(40)
+  entidad   String   @db.VarChar(40)
+  entidadId Int?     @map("entidad_id")
+  detalle   Json?
+  ip        String?  @db.VarChar(45)
+  fecha     DateTime @default(now()) @db.Timestamptz(6)
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([fecha])
+  @@index([entidad, entidadId])
+  @@map("auditoria")
+}

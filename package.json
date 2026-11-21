@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate",
+    "db:generar": "prisma generate",
+    "db:migrar": "prisma migrate deploy",
+    "db:verificar": "tsx scripts/verificar-db.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@google/genai": "^3.6.1",
