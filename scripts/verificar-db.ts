@@ -25,6 +25,15 @@ async function verificar(nombre: string, variable: string): Promise<boolean> {
     const [quien] = await prisma.$queryRawUnsafe<{ usuario: string }[]>("SELECT current_user AS usuario");
     console.log(`  Conectado como: ${quien.usuario}`);
 
+    // Prisma envia los Date sin zona horaria: la sesion debe estar en UTC (valor por defecto de Supabase).
+    const [zona] = await prisma.$queryRawUnsafe<{ zona: string }[]>("SELECT current_setting('TimeZone') AS zona");
+    if (zona.zona === "UTC" || zona.zona === "Etc/UTC") {
+      console.log(`  Zona horaria de la sesion: ${zona.zona} -> OK`);
+    } else {
+      ok = false;
+      console.log(`  ALERTA: zona horaria de la sesion "${zona.zona}"; debe ser UTC para que los filtros por fecha sean exactos.`);
+    }
+
     const tablas = await prisma.$queryRawUnsafe<{ table_name: string }[]>(
       "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_type = 'BASE TABLE'",
       conf.schema,

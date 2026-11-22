@@ -15,3 +15,11 @@ export const formatoFecha = (v: string | Date | null | undefined) => (v ? fecha.
 /** Columnas DATE ("AAAA-MM-DD", p. ej. la fecha esperada de una orden): se muestran sin desfase horario. */
 const dia = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeZone: "UTC" });
 export const formatoDia = (v: string | null | undefined) => (v ? dia.format(new Date(`${v}T00:00:00Z`)) : "—");
+
+/** Porcentaje con un decimal: 24,5 %. */
+const pct = new Intl.NumberFormat("es-CO", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+export const formatoPct = (v: number | null | undefined) => (v == null ? "—" : `${pct.format(v)} %`);
+
+/** Pesos abreviados para ejes de graficos: $ 3,6 M. */
+const copCorto = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", notation: "compact", maximumFractionDigits: 1 });
+export const formatoCOPCorto = (v: number | null | undefined) => (v == null ? "—" : copCorto.format(v));
