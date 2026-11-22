@@ -1,16 +1,27 @@
+// ============================================================
+// Catalogo de productos (docs/04-REQ RF-09). Modulo de referencia:
+// los demas catalogos siguen esta misma estructura.
+// ============================================================
 import type { Metadata } from "next";
 import { protegerPagina } from "@/server/auth/autorizacion";
-import { EnConstruccion } from "@/components/layout/en-construccion";
+import { accionesPermitidas, puedeLeer } from "@/lib/permisos";
+import { ModuloProductos } from "./modulo-productos";
 
 export const metadata: Metadata = { title: "Productos" };
 
 export default async function Pagina() {
-  await protegerPagina("/catalogos/productos");
+  const sesion = await protegerPagina("/catalogos/productos");
   return (
-    <EnConstruccion
-      titulo="Productos"
-      fase={3}
-      descripcion="Gestión de productos: SKU, categoría, proveedor principal, costo y precio."
-    />
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
+        <p className="text-sm text-muted-foreground">Catálogo de productos con su categoría, proveedor principal, costo y precio.</p>
+      </div>
+      <ModuloProductos
+        acciones={accionesPermitidas("productos", sesion.rol)}
+        verCategorias={puedeLeer("categorias", sesion.rol)}
+        verProveedores={puedeLeer("proveedores", sesion.rol)}
+      />
+    </div>
   );
 }
