@@ -26,6 +26,7 @@
 - Montos, cantidades e identificadores con tipos y rangos explícitos; textos con longitud máxima.
 - Prisma usa consultas parametrizadas; las consultas SQL de KPI usan `$queryRaw` con plantillas parametrizadas, **nunca** concatenación de texto.
 - Transacciones y restricciones `CHECK` en la BD (`05-DAT` §4) como última barrera.
+- Reportes CSV: los textos que empiezan con `=`, `+`, `-`, `@` o tabulador se anteponen con un apóstrofo para evitar la inyección de fórmulas al abrir el archivo en una hoja de cálculo. Cada descarga se audita (`REPORTE_EXPORTADO`, con los filtros y el número de filas) y el reporte de ventas tiene un límite de 100.000 líneas.
 
 ## 4. Gestión de secretos
 

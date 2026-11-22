@@ -17,7 +17,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | G4-03 | IA para una función concreta del negocio | Reposición priorizada por cobertura frente al tiempo de entrega; análisis comercial | 7 | OBL-6, OBL-7 | RF-36, RF-37, RN-17 | ⏳ |
 | G4-04 | Chatbot funcional | Chatbot con llamadas a funciones sobre datos reales | 6 | OBL-5 | RF-31–RF-35 | ⏳ |
 | G4-05 | Al menos dos agentes con responsabilidades diferentes | Analista de inventario y analista comercial | 7 | OBL-6, OBL-7 | RF-36–RF-41 | ⏳ |
-| G4-06 | Dashboard con mínimo seis KPI | Ocho KPI calculados por consultas | 5 | OBL-1, OBL-8 | RF-24–RF-29, `06-KPI` | ⏳ |
+| G4-06 | Dashboard con mínimo seis KPI | Ocho KPI calculados por consultas | 5 | OBL-1, OBL-8 | RF-24–RF-29, `06-KPI` | 🟡 |
 | G4-07 | Interacción del usuario con los módulos principales | Interfaz por rol | 2–7 | Capturas por módulo | RNF-01 | 🟡 |
 | G4-08 | Validaciones, manejo de errores y pruebas básicas | Zod, códigos HTTP, Vitest, PowerShell | 3–8 | Resultados de pruebas | RNF-03, RNF-06, `10-PRU` | 🟡 |
 | G4-09 | Repositorio GitHub con documentación para ejecutar | README, `docs/`, `.env.example` | 11 | URL del repositorio | RNF-10 | ⏳ |
@@ -33,8 +33,8 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | G6-04 | Inteligencia artificial | Resolver una necesidad concreta | Agente de reposición | 7 | RF-36–RF-37 | ⏳ |
 | G6-05 | Chatbot | Responder sobre el negocio y el sistema | Herramientas de solo lectura | 6 | RF-31–RF-35 | ⏳ |
 | G6-06 | Agentes inteligentes | Dos tareas diferenciadas e integradas | Informe ejecutivo que coordina ambos agentes | 7 | RF-39 | ⏳ |
-| G6-07 | Dashboard | Seis KPI calculados a partir de datos | `06-KPI` | 5 | RF-24 | ⏳ |
-| G6-08 | Reportes | Consultar o exportar un reporte | Exportación CSV | 5 | RF-30 | ⏳ |
+| G6-07 | Dashboard | Seis KPI calculados a partir de datos | `06-KPI` | 5 | RF-24 | 🟡 |
+| G6-08 | Reportes | Consultar o exportar un reporte | Exportación CSV | 5 | RF-30 | 🟡 |
 | G6-09 | Validación y pruebas | Comprobar funcionalidades y manejar errores | `10-PRU` | 8, 10 | RNF-06, `10-PRU` | ⏳ |
 
 ## 3. Chatbot y agentes (guía, sección 7)
@@ -52,12 +52,12 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 
 | ID | Exigencia | Fase | Requisitos | Estado |
 |---|---|---|---|---|
-| G8-01 | Cada KPI con nombre, definición, fórmula, periodo y fuente | 1, 5 | `06-KPI` §2 | ⏳ |
-| G8-02 | Tarjetas con los valores de los KPI | 5 | RF-24 | ⏳ |
-| G8-03 | Dos o más visualizaciones gráficas | 5 | RF-25 | ⏳ |
-| G8-04 | Filtros pertinentes (periodo, sucursal, producto o estado) | 5 | RF-26 | ⏳ |
-| G8-05 | Interpretación breve de los resultados | 5 | RF-27 | ⏳ |
-| G8-06 | Explicación de cómo los agentes o el chatbot usan los datos del dashboard | 5, 7 | RF-29, `06-KPI` §5 | ⏳ |
+| G8-01 | Cada KPI con nombre, definición, fórmula, periodo y fuente | 1, 5 | `06-KPI` §2 | 🟡 |
+| G8-02 | Tarjetas con los valores de los KPI | 5 | RF-24 | 🟡 |
+| G8-03 | Dos o más visualizaciones gráficas | 5 | RF-25 | 🟡 |
+| G8-04 | Filtros pertinentes (periodo, sucursal, producto o estado) | 5 | RF-26 | 🟡 |
+| G8-05 | Interpretación breve de los resultados | 5 | RF-27 | 🟡 |
+| G8-06 | Explicación de cómo los agentes o el chatbot usan los datos del dashboard | 5, 7 | RF-29, `06-KPI` §5 | 🟡 |
 
 ## 5. Requerimientos no funcionales (guía, sección 10)
 
