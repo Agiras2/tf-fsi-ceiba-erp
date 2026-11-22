@@ -30,7 +30,7 @@ export function DetalleVenta({ venta }: { venta: Venta }) {
 
       {venta.estado === "ANULADA" && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          <span className="font-medium">Anulada</span> por {venta.anuladaPor?.nombre ?? "—"} el {formatoFechaHora(venta.fechaAnulacion)}.
+          <span className="font-medium">Anulada</span> por {venta.anuladaPor?.nombre ?? "—"} · {formatoFechaHora(venta.fechaAnulacion)}
           <div className="text-muted-foreground">Motivo: {venta.motivoAnulacion}</div>
           <div className="text-xs text-muted-foreground">Las existencias se restituyeron en el kardex y la venta no cuenta en los indicadores.</div>
         </div>
