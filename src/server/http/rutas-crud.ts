@@ -26,6 +26,17 @@ export async function leerCuerpo(req: NextRequest): Promise<unknown> {
   }
 }
 
+/** Cuerpo opcional para acciones sin datos (aprobar, recibir): vacio equivale a {}. */
+export async function leerCuerpoOpcional(req: NextRequest): Promise<unknown> {
+  const texto = await req.text();
+  if (texto.trim() === "") return {};
+  try {
+    return JSON.parse(texto);
+  } catch {
+    throw new ErrorApi(400, "CUERPO_INVALIDO", "El cuerpo de la solicitud debe ser JSON válido.");
+  }
+}
+
 export async function leerId(ctx: ContextoRuta): Promise<number> {
   const { id } = await ctx.params;
   const n = Number(id);
@@ -82,5 +93,26 @@ export function rutasRecurso(servicio: ServicioCrud, permisos: PermisosCrud) {
         return manejarError(e);
       }
     },
+  };
+}
+
+/**
+ * POST /api/{recurso}/{id}/{accion}: cambios de estado y operaciones de negocio
+ * (anular una venta; aprobar, cancelar o recibir una orden de compra).
+ */
+export function rutaAccion(
+  roles: readonly Rol[],
+  accion: (id: number, cuerpo: unknown, ctx: Contexto) => Promise<unknown>,
+  opciones: { cuerpoOpcional?: boolean } = {},
+) {
+  return async function POST(req: NextRequest, rc: ContextoRuta) {
+    try {
+      const ctx = await contexto(roles, req);
+      const id = await leerId(rc);
+      const cuerpo = opciones.cuerpoOpcional ? await leerCuerpoOpcional(req) : await leerCuerpo(req);
+      return NextResponse.json(await accion(id, cuerpo, ctx));
+    } catch (e) {
+      return manejarError(e);
+    }
   };
 }
