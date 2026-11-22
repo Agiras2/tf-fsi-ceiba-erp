@@ -60,3 +60,40 @@ export function accionesInventario(rol: Rol) {
     kardex: incluye(PERMISOS_INVENTARIO.kardex),
   };
 }
+
+/** Ventas (docs/03-NEG 4.1, docs/04-REQ RF-16 a RF-18). El cajero opera solo su sucursal (RN-05). */
+export const PERMISOS_VENTAS = {
+  leer: ["ADMIN", "GERENTE", "CAJERO"],
+  registrar: ["CAJERO"],
+  anular: ["GERENTE"],
+} as const satisfies Record<string, readonly Rol[]>;
+
+/** Ordenes de compra (docs/03-NEG 4.1, docs/04-REQ RF-19 a RF-23). Bodega opera solo su sucursal (RN-05). */
+export const PERMISOS_COMPRAS = {
+  leer: ["ADMIN", "GERENTE", "BODEGA"],
+  crear: ["BODEGA"],
+  editar: ["BODEGA", "GERENTE"],
+  aprobar: ["GERENTE"],
+  cancelar: ["GERENTE"],
+  recibir: ["BODEGA"],
+} as const satisfies Record<string, readonly Rol[]>;
+
+export function accionesVentas(rol: Rol) {
+  return {
+    registrar: (PERMISOS_VENTAS.registrar as readonly Rol[]).includes(rol),
+    anular: (PERMISOS_VENTAS.anular as readonly Rol[]).includes(rol),
+    /** El costo y la utilidad solo los ven el administrador y el gerente. */
+    verCostos: rol === "ADMIN" || rol === "GERENTE",
+  };
+}
+
+export function accionesCompras(rol: Rol) {
+  const incluye = (roles: readonly Rol[]) => roles.includes(rol);
+  return {
+    crear: incluye(PERMISOS_COMPRAS.crear),
+    editar: incluye(PERMISOS_COMPRAS.editar),
+    aprobar: incluye(PERMISOS_COMPRAS.aprobar),
+    cancelar: incluye(PERMISOS_COMPRAS.cancelar),
+    recibir: incluye(PERMISOS_COMPRAS.recibir),
+  };
+}

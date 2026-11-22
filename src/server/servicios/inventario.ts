@@ -9,11 +9,14 @@ import {
   esquemaAjuste, esquemaUmbrales, estadoInventario, ESTADOS_INVENTARIO, type EstadoInventario,
 } from "@/lib/esquemas/inventario";
 import { esquemaListado } from "@/lib/esquemas/comunes";
-import { auditar, busqueda, filtroId, pagina, paginar, type Contexto } from "./comun";
+import { aNumero, auditar, busqueda, filtroId, pagina, paginar, type Contexto } from "./comun";
 
 const incluir = {
   producto: {
-    select: { id: true, sku: true, nombre: true, unidad: true, activo: true, categoria: { select: { id: true, nombre: true } } },
+    select: {
+      id: true, sku: true, nombre: true, unidad: true, activo: true, precio: true, costo: true, proveedorId: true,
+      categoria: { select: { id: true, nombre: true } },
+    },
   },
   sucursal: { select: { id: true, codigo: true, nombre: true } },
 } as const;
@@ -21,7 +24,11 @@ const incluir = {
 type FilaInventario = Prisma.InventarioGetPayload<{ include: typeof incluir }>;
 
 function salida(i: FilaInventario) {
-  return { ...i, estado: estadoInventario(i.stock, i.stockMinimo, i.stockMaximo) };
+  return {
+    ...i,
+    producto: { ...i.producto, precio: aNumero(i.producto.precio), costo: aNumero(i.producto.costo) },
+    estado: estadoInventario(i.stock, i.stockMinimo, i.stockMaximo),
+  };
 }
 
 /** Condicion de BD equivalente a RN-12 (compara columnas con referencias de campo). */
@@ -48,7 +55,7 @@ async function obtenerEnAlcance(id: number, ctx: Contexto) {
 }
 
 export const servicioInventario = {
-  /** RF-12: existencias con estado, filtros y resumen por estado. */
+  /** RF-12: existencias con estado, filtros y resumen por estado. Tambien alimenta la caja y el formulario de compras. */
   async listar(params: URLSearchParams, ctx: Contexto) {
     const p = esquemaListado.parse(Object.fromEntries(params));
     const estado = params.get("estado") ?? "todos";
@@ -61,6 +68,7 @@ export const servicioInventario = {
       producto: {
         activo: true,
         categoriaId: filtroId(params, "categoriaId"),
+        proveedorId: filtroId(params, "proveedorId"),
         ...busqueda(p.q, ["sku", "nombre"]),
       },
     };

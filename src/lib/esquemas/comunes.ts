@@ -2,6 +2,7 @@
 // CeibaERP - Piezas de validacion reutilizables (cliente y servidor)
 // ============================================================
 import { z } from "@/lib/zod";
+import { esFechaValida } from "@/lib/fechas";
 
 /** Texto obligatorio recortado. */
 export const texto = (min: number, max: number) => z.string().trim().min(min).max(max);
@@ -34,6 +35,9 @@ export const monto = z.coerce
   .positive()
   .max(1_000_000_000)
   .refine((n) => Math.round(n * 100) === n * 100, { message: "Use máximo 2 decimales." });
+
+/** Fecha de calendario "AAAA-MM-DD" (los filtros y la fecha esperada de las ordenes). */
+export const fecha = z.string().trim().refine(esFechaValida, { message: "Use una fecha válida (AAAA-MM-DD)." });
 
 /** Parametros de listado: busqueda, paginacion y estado. */
 export const esquemaListado = z.object({
