@@ -40,3 +40,23 @@ export function puedeLeer(recurso: RecursoCrud, rol: Rol): boolean {
   const p: PermisosCrud = PERMISOS[recurso];
   return p.leer.includes(rol);
 }
+
+/** Inventario (docs/03-NEG 4.1, docs/04-REQ RF-12 a RF-15). El alcance por sucursal se aplica en el servidor. */
+export const PERMISOS_INVENTARIO = {
+  leer: ["ADMIN", "GERENTE", "BODEGA", "CAJERO"],
+  umbrales: ["ADMIN", "BODEGA"],
+  ajustar: ["BODEGA"],
+  kardex: ["ADMIN", "GERENTE", "BODEGA"],
+} as const satisfies Record<string, readonly Rol[]>;
+
+/** Auditoria (RF-05): solo el administrador. */
+export const PERMISOS_AUDITORIA = { leer: ["ADMIN"] } as const satisfies Record<string, readonly Rol[]>;
+
+export function accionesInventario(rol: Rol) {
+  const incluye = (roles: readonly Rol[]) => roles.includes(rol);
+  return {
+    umbrales: incluye(PERMISOS_INVENTARIO.umbrales),
+    ajustar: incluye(PERMISOS_INVENTARIO.ajustar),
+    kardex: incluye(PERMISOS_INVENTARIO.kardex),
+  };
+}

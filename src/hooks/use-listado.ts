@@ -7,8 +7,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, ErrorCliente } from "@/lib/api-cliente";
 import type { Pagina } from "@/lib/esquemas/comunes";
 
-export type EstadoListado<T> = {
+export type EstadoListado<T, R extends Pagina<T> = Pagina<T>> = {
   datos: T[];
+  /** Respuesta completa (por ejemplo, con un resumen adicional al listado). */
+  respuesta: R | null;
   total: number;
   pagina: number;
   tamano: number;
@@ -22,15 +24,19 @@ export type EstadoListado<T> = {
   recargar: () => void;
 };
 
-type Resultado<T> = { clave: string; datos: T[]; total: number; error: string | null };
+type Resultado<T, R> = { clave: string; datos: T[]; total: number; error: string | null; respuesta: R | null };
 
-export function useListado<T>(url: string, filtrosIniciales: Record<string, string> = {}, tamano = 20): EstadoListado<T> {
+export function useListado<T, R extends Pagina<T> = Pagina<T>>(
+  url: string,
+  filtrosIniciales: Record<string, string> = {},
+  tamano = 20,
+): EstadoListado<T, R> {
   const [pagina, setPagina] = useState(1);
   const [busqueda, setBusquedaInterna] = useState("");
   const [q, setQ] = useState("");
   const [filtros, setFiltros] = useState(filtrosIniciales);
   const [version, setVersion] = useState(0);
-  const [resultado, setResultado] = useState<Resultado<T>>({ clave: "", datos: [], total: 0, error: null });
+  const [resultado, setResultado] = useState<Resultado<T, R>>({ clave: "", datos: [], total: 0, error: null, respuesta: null });
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clave de la consulta actual: cuando cambia, se pide de nuevo al servidor.
@@ -42,9 +48,9 @@ export function useListado<T>(url: string, filtrosIniciales: Record<string, stri
 
   useEffect(() => {
     let cancelado = false;
-    api<Pagina<T>>(consulta)
+    api<R>(consulta)
       .then((r) => {
-        if (!cancelado) setResultado({ clave, datos: r.datos, total: r.total, error: null });
+        if (!cancelado) setResultado({ clave, datos: r.datos, total: r.total, error: null, respuesta: r });
       })
       .catch((e: unknown) => {
         const error = e instanceof ErrorCliente ? e.message : "No fue posible cargar los datos.";
@@ -74,6 +80,7 @@ export function useListado<T>(url: string, filtrosIniciales: Record<string, stri
 
   return {
     datos: resultado.datos,
+    respuesta: resultado.respuesta,
     total: resultado.total,
     pagina,
     tamano,

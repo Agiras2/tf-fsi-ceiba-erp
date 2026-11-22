@@ -13,7 +13,7 @@ import type { PermisosCrud } from "@/lib/permisos";
 
 type ContextoRuta = { params: Promise<{ id: string }> };
 
-async function contexto(roles: readonly Rol[], req: NextRequest): Promise<Contexto> {
+export async function contexto(roles: readonly Rol[], req: NextRequest): Promise<Contexto> {
   const sesion = await requerirRol(roles);
   return { sesion, ip: ipDeSolicitud(req.headers) };
 }
