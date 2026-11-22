@@ -113,6 +113,7 @@ try {
 |---|---|---|---|---|---|---|
 | DEF-01 | Prueba manual (Fase 3A), cajero en Productos | Al abrir Productos con el rol Cajero aparecía tres veces "No fue posible cargar las opciones del formulario": la pantalla pedía categorías y proveedores, que el cajero no puede consultar (403) | Defecto funcional | Las opciones se cargan solo si el rol tiene permiso de lectura (`puedeLeer` en `src/lib/permisos.ts`); para el cajero se ocultan esos filtros. Prueba unitaria agregada | `fix(catalogos): ...` | Corregido |
 | DEF-02 | Revisión de código (Fase 3B), pantalla de Categorías | La pantalla generada por Copilot usaba el campo "activo" en lugar de "activa": todas las categorías se mostraban inactivas, no aparecía la acción de desactivar y reactivar fallaba con 400. No lo detectaron typecheck, lint ni las pruebas, porque el tipo se declaró a mano | Defecto funcional | Copilot corrigió el campo en tipos.ts y modulo-categorias.tsx a partir del diagnóstico de la revisión; se verificó en el navegador | `fix(catalogos): ...` | Corregido |
+| DEF-03 | Prueba manual (Fase 3C), kardex de Arroz blanco 1 kg | En el diálogo del kardex, la columna Motivo y el botón de página siguiente se salían del borde del diálogo: el contenido, como elemento de una cuadrícula CSS, se ensanchaba hasta el ancho de la tabla | Defecto de interfaz | Se limitó el contenido al ancho del diálogo (`min-w-0`), se amplió el diálogo y el motivo hace salto de línea; la tabla se desplaza dentro de su recuadro | `fix(inventario): ...` | Corregido |
 
 ## 8. Criterios de salida
 
