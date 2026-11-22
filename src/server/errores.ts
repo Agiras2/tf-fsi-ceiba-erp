@@ -39,9 +39,35 @@ export function manejarError(e: unknown): NextResponse<CuerpoError> {
     return respuestaError(400, "DATOS_INVALIDOS", "Los datos enviados no son válidos.", detalles);
   }
   const codigoPrisma = (e as { code?: string })?.code;
-  if (codigoPrisma === "P2002") return respuestaError(409, "DUPLICADO", "Ya existe un registro con ese valor único.");
+  if (codigoPrisma === "P2002") {
+    const campos = camposUnicos(e);
+    const detalles = campos.map((campo) => ({ campo, mensaje: "Ya existe un registro con este valor." }));
+    const sufijo = campos.length ? `: ${campos.join(", ")}` : "";
+    return respuestaError(409, "DUPLICADO", `Ya existe un registro con ese valor único${sufijo}.`, detalles);
+  }
   if (codigoPrisma === "P2025") return respuestaError(404, "NO_ENCONTRADO", "El recurso no existe.");
   if (codigoPrisma === "P2003") return respuestaError(409, "EN_USO", "El registro está relacionado con otros datos.");
   console.error("[CeibaERP] Error no controlado:", e);
   return respuestaError(500, "ERROR_INTERNO", "Ocurrió un error inesperado. Intente de nuevo.");
+}
+
+/** Campos de la restriccion de unicidad violada (formato clasico de Prisma o del adaptador pg). */
+function camposUnicos(e: unknown): string[] {
+  const meta = (e as { meta?: Record<string, unknown> })?.meta ?? {};
+  const target = meta.target;
+  if (Array.isArray(target)) return target.map(String);
+  if (typeof target === "string") return [target];
+  const causa = (meta.driverAdapterError as { cause?: { table?: string; constraint?: { fields?: unknown; index?: string } } })?.cause;
+  const campos = causa?.constraint?.fields;
+  if (Array.isArray(campos)) return campos.map((c) => aCamelCase(String(c).replace(/"/g, "")));
+  // Con el adaptador pg llega el nombre del indice: "<tabla>_<columna>_key".
+  const indice = causa?.constraint?.index;
+  if (indice && causa?.table && indice.startsWith(`${causa.table}_`) && indice.endsWith("_key")) {
+    return [aCamelCase(indice.slice(causa.table.length + 1, -4))];
+  }
+  return [];
+}
+
+function aCamelCase(columna: string): string {
+  return columna.replace(/_([a-z])/g, (_, l: string) => l.toUpperCase());
 }

@@ -1,9 +1,3 @@
-// ============================================================
-// CeibaERP - Zod configurado con mensajes en espanol.
-// Todos los esquemas deben importar "z" desde este archivo.
-// ============================================================
-import { z } from "zod";
-
-z.config(z.locales.es());
-
-export { z };
+// Compatibilidad: la configuracion de Zod en espanol vive en src/lib/zod.ts
+// para que cliente y servidor compartan los mismos esquemas.
+export { z } from "@/lib/zod";

@@ -79,12 +79,15 @@ tf-fsi-ceiba-erp/
 │   ├── components/
 │   │   ├── ui/                    Componentes shadcn/ui
 │   │   └── ...                    Componentes por módulo
-│   ├── lib/                       Utilidades de cliente (formato COP, fechas)
+│   ├── hooks/                     Hooks de cliente (use-listado: búsqueda, filtros y paginación)
+│   ├── lib/                       Compartido cliente/servidor: navegación por rol, permisos por
+│   │                              recurso, esquemas Zod (esquemas/), cliente HTTP y formatos
 │   └── server/
 │       ├── db.ts                  Instancia única de Prisma Client
 │       ├── auth/                  Sesión JWT, contraseñas, permisos por rol y sucursal
 │       ├── validacion/            Esquemas Zod por recurso
-│       ├── servicios/             catalogos, inventario, ventas, compras, kpi, reportes, auditoria
+│       ├── http/                  Fábrica de Route Handlers CRUD (rutas-crud.ts)
+│       ├── servicios/             catalogos, usuarios, inventario, ventas, compras, kpi, reportes
 │       ├── ia/
 │       │   ├── gemini.ts          Cliente y bucle de llamadas a funciones
 │       │   ├── herramientas/      Una herramienta por archivo (07-IAG §3)
@@ -160,6 +163,13 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 - **Navegación por rol:** `src/lib/navegacion.ts` define el menú y la página de inicio de cada rol. La misma tabla decide el acceso a las páginas en el servidor, y las rutas desconocidas se niegan por defecto.
 - **Validación:** Zod 4 con mensajes en español (`src/server/validacion/zod.ts`) y esquemas estrictos.
 - **Errores:** `src/server/errores.ts` convierte los errores de dominio, de Zod y de Prisma al formato uniforme de `04-REQ` §4.9, sin exponer trazas.
+- **Esquemas compartidos:** los esquemas de `src/lib/esquemas/` validan en el formulario (cliente) y en el servicio (servidor); así el usuario ve el mismo mensaje en ambos lados.
+- **Permisos por recurso:** `src/lib/permisos.ts` es la tabla única de quién lee, crea, edita y elimina cada recurso. Las rutas la usan para autorizar y las pantallas para mostrar u ocultar botones.
+- **CRUD genérico:** cada catálogo implementa la interfaz `ServicioCrud` y sus rutas se crean con `rutasColeccion` y `rutasRecurso` (`src/server/http/rutas-crud.ts`). Agregar un catálogo nuevo no repite autenticación, autorización ni manejo de errores.
+- **Eliminación (RN-16):** si el registro tiene historial se desactiva; si no, se elimina junto con sus filas de inventario. Los usuarios nunca se eliminan, solo se desactivan.
+- **Inventario:** el estado (agotado, bajo mínimo, normal, sobrestock) se calcula con la misma función en el servidor y en la interfaz (`src/lib/esquemas/inventario.ts`), y los filtros por estado se resuelven en la BD comparando columnas con referencias de campo de Prisma. Los ajustes de salida usan una actualización condicional (`stock >= cantidad`) dentro de una transacción, de modo que dos ajustes simultáneos nunca dejan el stock negativo (RN-01); cada ajuste escribe el kardex y la auditoría en la misma transacción.
+- **Alcance por sucursal en el servidor:** un registro de otra sucursal responde 404 para Bodega y Cajero, sin importar el `sucursalId` que envíe el cliente (RN-05).
+- **Módulo de referencia:** `src/app/(app)/catalogos/productos/` define el patrón de las pantallas (listado con búsqueda, filtros y paginación; formulario en diálogo con validación por campo; confirmación antes de desactivar).
 
 ## 6. Variables de entorno
 
