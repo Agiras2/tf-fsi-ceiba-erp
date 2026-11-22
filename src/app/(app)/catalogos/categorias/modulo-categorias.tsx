@@ -38,7 +38,7 @@ export function ModuloCategorias({ acciones }: { acciones: Acciones }) {
 
   async function reactivar(categoria: Categoria) {
     try {
-      await api(`/api/categorias/${categoria.id}`, { method: "PATCH", json: { activo: true } });
+      await api(`/api/categorias/${categoria.id}`, { method: "PATCH", json: { activa: true } });
       toast.success("Categoría reactivada.");
       listado.recargar();
     } catch (e) {
@@ -85,7 +85,7 @@ export function ModuloCategorias({ acciones }: { acciones: Acciones }) {
                   <TableCell className="font-medium">{categoria.nombre}</TableCell>
                   <TableCell className="max-w-96 truncate" title={categoria.descripcion ?? ""}>{categoria.descripcion ?? "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{categoria.productos}</TableCell>
-                  <TableCell><InsigniaEstado activo={categoria.activo} /></TableCell>
+                  <TableCell><InsigniaEstado activo={categoria.activa} /></TableCell>
                   {columnas === 5 && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
@@ -94,12 +94,12 @@ export function ModuloCategorias({ acciones }: { acciones: Acciones }) {
                             <Pencil />
                           </Button>
                         )}
-                        {acciones.eliminar && categoria.activo && (
+                        {acciones.eliminar && categoria.activa && (
                           <Button variant="ghost" size="icon-sm" onClick={() => setADesactivar(categoria)} aria-label={`Desactivar ${categoria.nombre}`} title="Desactivar">
                             <PowerOff />
                           </Button>
                         )}
-                        {acciones.editar && !categoria.activo && (
+                        {acciones.editar && !categoria.activa && (
                           <Button variant="ghost" size="icon-sm" onClick={() => reactivar(categoria)} aria-label={`Reactivar ${categoria.nombre}`} title="Reactivar">
                             <Power />
                           </Button>

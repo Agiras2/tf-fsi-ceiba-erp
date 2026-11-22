@@ -2,7 +2,7 @@ export type Categoria = {
   id: number;
   nombre: string;
   descripcion: string | null;
-  activo: boolean;
+  activa: boolean;
   productos: number;
 };
 

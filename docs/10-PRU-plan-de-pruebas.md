@@ -112,6 +112,7 @@ try {
 | ID | Prueba | Descripción | Clasificación | Corrección | Commit | Estado |
 |---|---|---|---|---|---|---|
 | DEF-01 | Prueba manual (Fase 3A), cajero en Productos | Al abrir Productos con el rol Cajero aparecía tres veces "No fue posible cargar las opciones del formulario": la pantalla pedía categorías y proveedores, que el cajero no puede consultar (403) | Defecto funcional | Las opciones se cargan solo si el rol tiene permiso de lectura (`puedeLeer` en `src/lib/permisos.ts`); para el cajero se ocultan esos filtros. Prueba unitaria agregada | `fix(catalogos): ...` | Corregido |
+| DEF-02 | Revisión de código (Fase 3B), pantalla de Categorías | La pantalla generada por Copilot usaba el campo "activo" en lugar de "activa": todas las categorías se mostraban inactivas, no aparecía la acción de desactivar y reactivar fallaba con 400. No lo detectaron typecheck, lint ni las pruebas, porque el tipo se declaró a mano | Defecto funcional | Copilot corrigió el campo en tipos.ts y modulo-categorias.tsx a partir del diagnóstico de la revisión; se verificó en el navegador | `fix(catalogos): ...` | Corregido |
 
 ## 8. Criterios de salida
 
