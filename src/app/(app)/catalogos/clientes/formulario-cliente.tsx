@@ -30,7 +30,7 @@ export function FormularioCliente({
   abierto: boolean;
   cliente: Cliente | null;
   onCerrar: () => void;
-  onGuardado: () => void;
+  onGuardado: (cliente?: Cliente) => void;
 }) {
   return (
     <Dialog open={abierto} onOpenChange={(v) => !v && onCerrar()}>
@@ -51,7 +51,7 @@ function Contenido({
 }: {
   cliente: Cliente | null;
   onCerrar: () => void;
-  onGuardado: () => void;
+  onGuardado: (cliente?: Cliente) => void;
 }) {
   const [valores, setValores] = useState<Valores>(() => valoresDe(cliente));
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -74,10 +74,12 @@ function Contenido({
     setErrores({});
     setGuardando(true);
     try {
-      if (editando) await api(`/api/clientes/${cliente.id}`, { method: "PATCH", json: r.data });
-      else await api("/api/clientes", { method: "POST", json: r.data });
+      const guardado = editando
+        ? await api<Cliente>(`/api/clientes/${cliente.id}`, { method: "PATCH", json: r.data })
+        : await api<Cliente>("/api/clientes", { method: "POST", json: r.data });
       toast.success(editando ? "Cliente actualizado." : "Cliente creado.");
-      onGuardado();
+      // La caja usa el cliente devuelto para seleccionarlo en la venta (Fase 4).
+      onGuardado(guardado);
       onCerrar();
     } catch (err) {
       if (err instanceof ErrorCliente) {

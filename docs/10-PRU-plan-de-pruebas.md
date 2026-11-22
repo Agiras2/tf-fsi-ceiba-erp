@@ -47,6 +47,8 @@
 | PRU-I09 | Agente 1 con Gemini simulado que devuelve cantidades distintas | Las órdenes BORRADOR usan las cantidades del código; se ignoran candidatos inexistentes |
 | PRU-I10 | Informe ejecutivo con Gemini simulado | El Agente 2 queda ligado al Agente 1 mediante `ejecucionEntradaId` y `ejecucionPadreId` |
 
+**Verificación previa (Fase 4).** Los escenarios PRU-I01 a PRU-I06 se verificaron contra una base local con la API: venta con descuento de stock, kardex y auditoría; venta con un ítem sin existencias (409 y ningún stock descontado); seis ventas simultáneas sobre dos unidades (dos confirmadas, cuatro con 409, stock final 0); anulación con restitución; ciclo BORRADOR → APROBADA → RECIBIDA con aprobaciones simultáneas (una 200 y dos 409), y recepción de un borrador (409). Las pruebas de API y seguridad de esta fase quedan en `scripts/pruebas-api-fase04.ps1` (PRU-I01, I04, I05, S03, S04, S05, S07 y S08). En la Fase 8 los escenarios de integración se automatizan sobre el esquema `test`. Las pruebas unitarias PRU-U03 y PRU-U04 están en `tests/unit/procesos.test.ts`.
+
 ## 4. Pruebas de seguridad (PowerShell)
 
 Se ejecutan contra la app local y la desplegada. Las sesiones se manejan con `-WebSession` y el error se lee con `try/catch` sobre la respuesta.

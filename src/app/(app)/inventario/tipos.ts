@@ -10,7 +10,10 @@ export type FilaInventario = {
   stockMaximo: number;
   estado: EstadoInventario;
   updatedAt: string;
-  producto: { id: number; sku: string; nombre: string; unidad: string; categoria: { id: number; nombre: string } };
+  producto: {
+    id: number; sku: string; nombre: string; unidad: string; precio: number; costo: number; proveedorId: number;
+    categoria: { id: number; nombre: string };
+  };
   sucursal: { id: number; codigo: string; nombre: string };
 };
 
