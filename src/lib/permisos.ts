@@ -97,3 +97,25 @@ export function accionesCompras(rol: Rol) {
     recibir: incluye(PERMISOS_COMPRAS.recibir),
   };
 }
+
+/** Dashboard (RF-24 a RF-29): KPI y graficos para administrador y gerente; alertas tambien para bodega (su sucursal). */
+export const PERMISOS_DASHBOARD = {
+  kpis: ["ADMIN", "GERENTE"],
+  alertas: ["ADMIN", "GERENTE", "BODEGA"],
+} as const satisfies Record<string, readonly Rol[]>;
+
+/** Reportes CSV (RF-30): bodega solo descarga el inventario critico de su sucursal. */
+export const PERMISOS_REPORTES = {
+  ventas: ["ADMIN", "GERENTE"],
+  inventario: ["ADMIN", "GERENTE", "BODEGA"],
+  proveedores: ["ADMIN", "GERENTE"],
+} as const satisfies Record<string, readonly Rol[]>;
+
+export function reportesPermitidos(rol: Rol) {
+  const incluye = (roles: readonly Rol[]) => roles.includes(rol);
+  return {
+    ventas: incluye(PERMISOS_REPORTES.ventas),
+    inventario: incluye(PERMISOS_REPORTES.inventario),
+    proveedores: incluye(PERMISOS_REPORTES.proveedores),
+  };
+}

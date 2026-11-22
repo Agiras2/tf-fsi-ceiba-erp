@@ -6,12 +6,13 @@ Los KPI se calculan **en el servidor con consultas sobre la base de datos**, en 
 
 ## 1. Convenciones
 
-- **Periodo:** rango de fechas `desde`–`hasta`, ambos inclusive, en la zona horaria `America/Bogota`. Por defecto son los últimos 30 días hasta hoy.
+- **Periodo:** rango de fechas `desde`–`hasta`, ambos inclusive, en la zona horaria `America/Bogota`. Por defecto son los **últimos 30 días completos, hasta ayer**: el día en curso se excluye para no comparar un día parcial con uno completo del periodo anterior. El usuario puede incluir hoy eligiendo las fechas; el dashboard lo advierte.
 - **Periodo anterior:** rango de igual duración inmediatamente anterior; sirve para calcular la variación.
 - **Filtros:** sucursal y categoría. Si un KPI no admite un filtro, se indica.
 - **Ventas válidas:** solo las de estado `REGISTRADA`. Las anuladas se excluyen (RN-10).
 - **Productos activos:** `producto.activo = true`.
 - Las consultas de referencia usan los nombres reales de la BD en *snake_case* y parámetros `:desde`, `:hasta`, `:sucursal`, `:categoria` (nulos si no se filtra). Sirven para **verificar a mano** cada valor del dashboard (Fase 5).
+- **Verificación en un solo paso:** `scripts/verificar-kpi.sql` reúne estas consultas en una sola sentencia de solo lectura que devuelve los ocho KPI del periodo y del anterior. Se escribió a partir de estas fichas, sin reutilizar el código de la aplicación, y se ejecuta en el editor SQL de Supabase cambiando solo la primera línea (periodo, sucursal y categoría). Los días se convierten a instantes con `AT TIME ZONE 'America/Bogota'`.
 
 ---
 
