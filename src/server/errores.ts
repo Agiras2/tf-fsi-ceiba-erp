@@ -47,8 +47,24 @@ export function manejarError(e: unknown): NextResponse<CuerpoError> {
   }
   if (codigoPrisma === "P2025") return respuestaError(404, "NO_ENCONTRADO", "El recurso no existe.");
   if (codigoPrisma === "P2003") return respuestaError(409, "EN_USO", "El registro está relacionado con otros datos.");
+  if (esFallaDeConexion(e)) {
+    console.error("[CeibaERP] Base de datos no disponible:", (e as Error)?.message?.slice(0, 200) ?? e);
+    return respuestaError(503, "BD_NO_DISPONIBLE", "La base de datos no respondió a tiempo. Intente de nuevo en unos segundos.");
+  }
   console.error("[CeibaERP] Error no controlado:", e);
   return respuestaError(500, "ERROR_INTERNO", "Ocurrió un error inesperado. Intente de nuevo.");
+}
+
+// P2028: no se pudo iniciar la transaccion a tiempo; P1001/P1002/P1008/P1017: servidor
+// inalcanzable, tiempo agotado o conexion cerrada (DEF-05, docs/10-PRU).
+const CODIGOS_CONEXION = new Set(["P1001", "P1002", "P1008", "P1017", "P2028"]);
+const MENSAJES_CONEXION = /timeout exceeded when trying to connect|Connection terminated|ECONNRESET|ETIMEDOUT|ECONNREFUSED|Unable to start a transaction/i;
+
+/** Falla transitoria de la conexion con la base de datos: se responde 503 y no 500. */
+export function esFallaDeConexion(e: unknown): boolean {
+  const codigo = (e as { code?: string })?.code;
+  if (codigo && CODIGOS_CONEXION.has(codigo)) return true;
+  return e instanceof Error && MENSAJES_CONEXION.test(e.message);
 }
 
 /** Campos de la restriccion de unicidad violada (formato clasico de Prisma o del adaptador pg). */

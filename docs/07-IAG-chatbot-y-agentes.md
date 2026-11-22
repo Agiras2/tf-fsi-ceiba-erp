@@ -60,6 +60,16 @@ flowchart LR
 
 Para BOD y CAJ, el parámetro de sucursal se **ignora** y se reemplaza por la sucursal de la sesión (RN-05). Cada herramienta valida sus argumentos con Zod y limita el tamaño de su respuesta.
 
+**Implementación (Fase 6).** Las herramientas están en `src/server/ia/herramientas.ts` y llaman al mismo servicio del dashboard (`src/server/servicios/kpi.ts`). Detalles:
+
+- Los parámetros de periodo, sucursal y categoría son opcionales. La sucursal y la categoría se reconocen por nombre o código, sin importar tildes ni mayúsculas. Si no existen, la herramienta devuelve un error con las opciones válidas para que el modelo corrija.
+- Cada resultado incluye un objeto `filtros` con el periodo, la sucursal y la categoría que el servidor aplicó realmente. Cuando a un usuario de BOD o CAJ se le ignora la sucursal pedida, incluye además una nota que lo explica.
+- La declaración que recibe el modelo se genera desde el esquema Zod con `z.toJSONSchema`.
+- `productosEnRiesgo` incluye los agotados, los productos bajo el mínimo y los que tienen cobertura menor al tiempo de entrega del proveedor. La cobertura se calcula con la venta diaria promedio de los últimos 28 días completos.
+- `tendenciaVentas` usa por defecto las últimas 8 semanas completas, de lunes a domingo, y marca las semanas parciales.
+- `clientesRecurrentes` no envía al modelo documentos, correos ni teléfonos.
+- `calcularPropuestaReposicion` y `obtenerResultadoAgenteInventario` llegan con los agentes (Fase 7).
+
 ---
 
 ## 4. Chatbot empresarial
@@ -107,6 +117,19 @@ Reglas:
 | ¿Cuál será el precio del dólar mañana? | Ninguna → respuesta de "sin información" |
 
 ---
+
+### 4.4 Implementación (Fase 6)
+
+| Pieza | Archivo | Qué hace |
+|---|---|---|
+| Acceso al modelo | `src/server/ia/modelo.ts` | Interfaz `ModeloIA` y su implementación con Gemini (`@google/genai`): nivel de razonamiento, herramientas, tiempo límite de 30 s y modelo de respaldo opcional (`GEMINI_MODEL_RESPALDO`). Ante sobrecarga (503) el principal tiene dos intentos; con la cuota agotada (429) o un tiempo agotado (504) se pasa de inmediato al respaldo. Si respondió el respaldo, durante 60 s va primero, para que las rondas siguientes no esperen al principal saturado. 503 comprensible si todo falla o si falta `GEMINI_API_KEY`. Cada respuesta guarda el modelo que realmente respondió |
+| Ciclo de llamadas | `src/server/ia/orquestador.ts` | Hasta 5 rondas. En cada una conserva el contenido del modelo (con sus firmas de razonamiento) y responde cada llamada con su `id` y su `name`; en la última ronda exige texto sin herramientas |
+| Instrucciones | `src/server/ia/instrucciones.ts` | Las de §4.2 más el contexto que impone el servidor: rol, alcance de sucursal, fecha de hoy y periodo por defecto |
+| Servicio | `src/server/servicios/chat.ts` | Valida el mensaje (máximo 1000 caracteres) y verifica que la conversación sea propia (si no, 404). Envía los últimos 10 mensajes como contexto, limita a 10 preguntas por minuto por usuario y guarda la pregunta y la respuesta, con las herramientas usadas, solo si el modelo respondió. El guardado es una sola instrucción atómica (creación anidada o `createManyAndReturn`), sin transacción interactiva (DEF-05) |
+| API | `/api/chat`, `/api/chat/conversaciones`, `/api/chat/conversaciones/{id}` | Todos los roles; cada usuario solo ve sus conversaciones |
+| Interfaz | `src/app/(app)/chat/` | Conversaciones propias, preguntas sugeridas por rol, etiqueta "Respuesta generada por IA · Gemini (modelo) · fecha" y "Fuentes consultadas" con los filtros aplicados. El texto se muestra con un Markdown mínimo sin HTML |
+
+Pruebas: `tests/unit/ia.test.ts` usa un modelo simulado (permisos por rol, ciclo de llamadas, argumentos inválidos, límite de rondas, falta de clave, reintentos y orden de los modelos, y 503 ante fallas de conexión con la base de datos). `scripts/pruebas-chat-fase06.ps1` ejecuta PRU-C01 a PRU-C08 con Gemini real.
 
 ## 5. Agente 1 · Analista de inventario
 
@@ -239,6 +262,6 @@ El resumen consolidado se redacta con una llamada final al modelo a partir de am
 | Validación humana | Las órdenes de IA nacen en BORRADOR; las recomendaciones, PENDIENTES; el gerente decide y queda registrado |
 | Trazabilidad | `ejecucion_agente` guarda parámetros, herramientas usadas con argumentos, resultado, modelo, duración y error; `mensaje_chat` guarda las herramientas de cada respuesta |
 | Fundamentación | Toda cifra proviene de herramientas; los hallazgos citan el KPI correspondiente |
-| Límites del servicio | Ante un error 429 o un tiempo límite se reintenta una vez; si persiste, se responde 503 con un mensaje comprensible y el resto del sistema sigue operando |
+| Límites del servicio | Ante sobrecarga (503) se reintenta una vez el modelo principal; ante cuota agotada (429) o tiempo límite (504) se pasa directo al modelo de respaldo, que queda primero durante 60 s. Si todo falla se responde 503 con un mensaje comprensible y el resto del sistema sigue operando. Una falla transitoria de la base de datos también responde 503 (`BD_NO_DISPONIBLE`), no 500 |
 | Seguridad | Herramientas de solo lectura, contexto de rol impuesto por el servidor, instrucción de tratar los datos como datos, sin secretos ni datos personales reales en los mensajes al modelo |
 | Limitación reconocida | Las recomendaciones dependen de la calidad de los datos ficticios y de un modelo probabilístico; no sustituyen el criterio del gerente |

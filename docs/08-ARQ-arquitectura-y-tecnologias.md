@@ -175,6 +175,7 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 - **KPI y reportes (Fase 5):** `src/server/servicios/kpi.ts` es el único lugar donde se calculan los indicadores, los gráficos, las alertas y los datos de los reportes; lo usarán también las herramientas del chatbot y de los agentes. Las consultas son SQL parametrizado con `$queryRaw`, con las tablas calificadas por el esquema de la conexión (`esquemaDb`) y los instantes enviados como `timestamptz` explícitos en ISO con `Z`. Los semáforos y las reglas de interpretación están en `src/lib/kpi.ts`, sin acceso a la BD, y se prueban como funciones puras. Los CSV usan `;` como separador, coma decimal y UTF-8 con BOM, para abrirse directamente en Excel en español.
 - **Zona horaria de la sesión de BD:** Prisma envía los `Date` sin zona horaria, así que la sesión de PostgreSQL debe estar en UTC (el valor por defecto de Supabase). `npm run db:verificar` lo comprueba (ver DEF-04 en `10-PRU`).
 - **Gráficos:** Recharts, con un eje por gráfico, leyenda cuando hay más de una serie, colores de estado reservados para el inventario y tabla de datos plegable bajo cada gráfico. Los colores se definen como variables CSS (`--chart-*`, `--estado-*`) en `globals.css`.
+- **Capa de IA (Fase 6):** `src/server/ia/` separa el acceso al modelo (interfaz `ModeloIA`, implementada con Gemini e intercambiable por un modelo simulado en las pruebas), el registro de herramientas (esquemas Zod convertidos a JSON Schema, roles permitidos y ejecución que nunca lanza: los errores vuelven al modelo como datos), el ciclo de llamadas a funciones y las instrucciones de sistema. El chatbot y los agentes de la Fase 7 comparten estas piezas.
 - **Alcance por sucursal en el servidor:** un registro de otra sucursal responde 404 para Bodega y Cajero, sin importar el `sucursalId` que envíe el cliente (RN-05).
 - **Módulo de referencia:** `src/app/(app)/catalogos/productos/` define el patrón de las pantallas (listado con búsqueda, filtros y paginación; formulario en diálogo con validación por campo; confirmación antes de desactivar).
 
@@ -187,6 +188,7 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 | `JWT_SECRET` | Clave para firmar las sesiones (≥ 32 caracteres aleatorios) | `.env` local y Railway |
 | `GEMINI_API_KEY` | Clave de la API de Gemini | `.env` local y Railway |
 | `GEMINI_MODEL` | Modelo de Gemini: `gemini-3.8-flash` (07-IAG §2) | `.env` local y Railway |
+| `GEMINI_MODEL_RESPALDO` | Opcional: modelo que se usa si el principal responde 503 (saturado) o 429 (sin cuota) | `.env` local y Railway |
 | `DB_SSL_CA_PATH` | Ruta opcional del certificado raíz de la BD (por defecto `certs/supabase-ca.crt`) | Opcional |
 | `SEED_DEMO_PASSWORD` | Contraseña de los usuarios de demostración | Solo `.env` local |
 | `DATABASE_URL_TEST` / `DIRECT_URL_TEST` | Mismas cadenas con `schema=test`, para el esquema de pruebas (`10-PRU` §1) | Solo `.env` local |
