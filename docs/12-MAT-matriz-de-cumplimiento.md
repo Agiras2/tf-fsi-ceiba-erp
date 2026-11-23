@@ -14,9 +14,9 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 |---|---|---|---|---|---|---|
 | G4-01 | CRUD de información | Catálogos, inventario, ventas y órdenes de compra | 3, 4 | OBL-2, OBL-3 | RF-06–RF-10, RF-12–RF-22 | 🟡 |
 | G4-02 | Persistencia en base de datos | PostgreSQL en Supabase con Prisma | 2 | Migración, *seed*, captura de tablas | RF-43, `05-DAT` | ✅ |
-| G4-03 | IA para una función concreta del negocio | Reposición priorizada por cobertura frente al tiempo de entrega; análisis comercial | 7 | OBL-6, OBL-7 | RF-36, RF-37, RN-17 | ⏳ |
+| G4-03 | IA para una función concreta del negocio | Reposición priorizada por cobertura frente al tiempo de entrega; análisis comercial | 7 | OBL-6, OBL-7 | RF-36, RF-37, RN-17 | 🟡 |
 | G4-04 | Chatbot funcional | Chatbot con llamadas a funciones sobre datos reales | 6 | OBL-5 | RF-31–RF-35 | 🟡 |
-| G4-05 | Al menos dos agentes con responsabilidades diferentes | Analista de inventario y analista comercial | 7 | OBL-6, OBL-7 | RF-36–RF-41 | ⏳ |
+| G4-05 | Al menos dos agentes con responsabilidades diferentes | Analista de inventario y analista comercial | 7 | OBL-6, OBL-7 | RF-36–RF-41 | 🟡 |
 | G4-06 | Dashboard con mínimo seis KPI | Ocho KPI calculados por consultas | 5 | OBL-1, OBL-8 | RF-24–RF-29, `06-KPI` | 🟡 |
 | G4-07 | Interacción del usuario con los módulos principales | Interfaz por rol | 2–7 | Capturas por módulo | RNF-01 | 🟡 |
 | G4-08 | Validaciones, manejo de errores y pruebas básicas | Zod, códigos HTTP, Vitest, PowerShell | 3–8 | Resultados de pruebas | RNF-03, RNF-06, `10-PRU` | 🟡 |
@@ -30,9 +30,9 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | G6-01 | Gestión empresarial | Crear, consultar, actualizar y eliminar | CRUD de catálogos y usuarios | 3 | RF-03, RF-06–RF-10 | 🟡 |
 | G6-02 | Gestión de procesos | Al menos un flujo de negocio completo | Ciclo de abastecimiento inteligente (`03-NEG` §6) | 4, 7 | RF-16–RF-22, RF-36–RF-37 | 🟡 |
 | G6-03 | Base de datos | Almacenar y recuperar información | Prisma + PostgreSQL | 2 | RF-43, RNF-03 | ✅ |
-| G6-04 | Inteligencia artificial | Resolver una necesidad concreta | Agente de reposición | 7 | RF-36–RF-37 | ⏳ |
+| G6-04 | Inteligencia artificial | Resolver una necesidad concreta | Agente de reposición | 7 | RF-36–RF-37 | 🟡 |
 | G6-05 | Chatbot | Responder sobre el negocio y el sistema | Herramientas de solo lectura | 6 | RF-31–RF-35 | 🟡 |
-| G6-06 | Agentes inteligentes | Dos tareas diferenciadas e integradas | Informe ejecutivo que coordina ambos agentes | 7 | RF-39 | ⏳ |
+| G6-06 | Agentes inteligentes | Dos tareas diferenciadas e integradas | Informe ejecutivo que coordina ambos agentes | 7 | RF-39 | 🟡 |
 | G6-07 | Dashboard | Seis KPI calculados a partir de datos | `06-KPI` | 5 | RF-24 | 🟡 |
 | G6-08 | Reportes | Consultar o exportar un reporte | Exportación CSV | 5 | RF-30 | 🟡 |
 | G6-09 | Validación y pruebas | Comprobar funcionalidades y manejar errores | `10-PRU` | 8, 10 | RNF-06, `10-PRU` | ⏳ |
@@ -44,9 +44,9 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | G7-01 | No basta un campo de texto con preguntas genéricas al modelo | El modelo solo responde a partir de herramientas que consultan la BD | 6 | RF-31, `07-IAG` §1 | ⏳ |
 | G7-02 | Chatbot consulta datos reales o funciones de negocio | Herramientas compartidas con el dashboard | 6 | RF-31, `07-IAG` §3 | 🟡 |
 | G7-03 | Chatbot indica cuando no tiene información | Instrucción de sistema y prueba específica | 6, 8 | RF-33 | 🟡 |
-| G7-04 | Agente de inventario: existencias, bajo mínimo, reposición, criterios | Agente 1 | 7 | RF-36, RF-37, `07-IAG` §5 | ⏳ |
-| G7-05 | Agente comercial: ventas, tendencias, acciones, contraste con dashboard | Agente 2 | 7 | RF-38, `07-IAG` §6 | ⏳ |
-| G7-06 | Mecanismos de interacción definidos entre agentes | El Agente 2 consume la salida registrada del Agente 1 | 7 | RF-39, `07-IAG` §7 | ⏳ |
+| G7-04 | Agente de inventario: existencias, bajo mínimo, reposición, criterios | Agente 1 | 7 | RF-36, RF-37, `07-IAG` §5 | 🟡 |
+| G7-05 | Agente comercial: ventas, tendencias, acciones, contraste con dashboard | Agente 2 | 7 | RF-38, `07-IAG` §6 | 🟡 |
+| G7-06 | Mecanismos de interacción definidos entre agentes | El Agente 2 consume la salida registrada del Agente 1 | 7 | RF-39, `07-IAG` §7 | 🟡 |
 
 ## 4. Dashboard y KPI (guía, sección 8)
 
@@ -70,7 +70,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | G10-05 | Trazabilidad | Auditoría de operaciones y registro de ejecuciones de agentes | RNF-05, RF-04 | 🟡 |
 | G10-06 | Confiabilidad | Manejo de errores con mensajes comprensibles | RNF-06 | 🟡 |
 | G10-07 | Privacidad | Datos ficticios, sin secretos en el repositorio | RNF-07 | ✅ |
-| G10-08 | Transparencia de IA | Etiqueta en respuestas de IA y recomendaciones con validación humana | RNF-08, RF-34 | ⏳ |
+| G10-08 | Transparencia de IA | Etiqueta en respuestas de IA y recomendaciones con validación humana | RNF-08, RF-34 | 🟡 |
 
 ## 6. Entregables (guía, sección 11)
 

@@ -23,6 +23,8 @@ export type SolicitudModelo = {
   modoHerramientas?: "auto" | "ninguna";
   /** Respuesta JSON validable (agentes, Fase 7). */
   esquemaRespuesta?: unknown;
+  /** Tiempo limite de la llamada; por defecto 30 s (los agentes usan mas). */
+  tiempoLimiteMs?: number;
 };
 
 export type RespuestaModelo = {
@@ -138,7 +140,7 @@ export class ModeloGemini implements ModeloIA {
     const config = {
       systemInstruction: s.sistema,
       thinkingConfig: { thinkingLevel: s.nivel === "bajo" ? ThinkingLevel.LOW : ThinkingLevel.MEDIUM },
-      httpOptions: { timeout: TIEMPO_LIMITE_MS },
+      httpOptions: { timeout: s.tiempoLimiteMs ?? TIEMPO_LIMITE_MS },
       ...(s.herramientas.length
         ? {
             tools: [{ functionDeclarations: s.herramientas }],

@@ -68,7 +68,7 @@ Para BOD y CAJ, el parámetro de sucursal se **ignora** y se reemplaza por la su
 - `productosEnRiesgo` incluye los agotados, los productos bajo el mínimo y los que tienen cobertura menor al tiempo de entrega del proveedor. La cobertura se calcula con la venta diaria promedio de los últimos 28 días completos.
 - `tendenciaVentas` usa por defecto las últimas 8 semanas completas, de lunes a domingo, y marca las semanas parciales.
 - `clientesRecurrentes` no envía al modelo documentos, correos ni teléfonos.
-- `calcularPropuestaReposicion` y `obtenerResultadoAgenteInventario` llegan con los agentes (Fase 7).
+- **Fase 7.** `calcularPropuestaReposicion` devuelve los candidatos que el código ya calculó para la ejecución (§5.2), sin ids internos, y permite filtrar por sucursal dentro del alcance. `obtenerResultadoAgenteInventario` lee de `ejecucion_agente` la salida validada del Agente 1. Ambas están en `src/server/ia/herramientas-agentes.ts` y no se ofrecen en el chatbot.
 
 ---
 
@@ -171,9 +171,13 @@ El modelo recibe los candidatos y puede consultar `cumplimientoProveedores`, `or
   "resumen": "string",
   "criterios": ["string"],
   "items": [{ "candidatoId": "string", "incluir": true, "prioridad": "ALTA|MEDIA|BAJA", "justificacion": "string" }],
-  "alertas": [{ "titulo": "string", "justificacion": "string", "proveedorId": 0 }]
+  "alertas": [{ "titulo": "string", "justificacion": "string", "proveedor": "string (opcional)" }]
 }
 ```
+
+En `items` el modelo incluye **solo** los candidatos que excluye o cuya prioridad sube; los demás se incluyen con su prioridad base. Así la respuesta es corta y consume menos cuota. El proveedor de una alerta se indica por nombre, porque el modelo no conoce los ids internos. Los textos demasiado largos se recortan en lugar de invalidar toda la salida.
+
+El análisis tiene dos pasos: primero el ciclo de llamadas a herramientas (nivel de razonamiento medio), que termina en un análisis en texto; después, una llamada sin herramientas con `responseJsonSchema` (nivel bajo) que convierte ese análisis y la lista de candidatos en el JSON anterior.
 
 ### 5.4 Acciones del sistema después de validar
 
@@ -182,7 +186,9 @@ El modelo recibe los candidatos y puede consultar `cumplimientoProveedores`, `or
 3. Las alertas se guardan como recomendaciones de tipo `OTRA`, en estado PENDIENTE.
 4. Se registra la ejecución completa en `ejecucion_agente`.
 
-**Si el servicio de IA falla**, la ejecución queda FALLIDA, se muestran los candidatos calculados con la etiqueta "sin análisis de IA" y no se crean órdenes.
+**Si el servicio de IA falla** (cuota, tiempo agotado, falta de clave o salida que no cumple el esquema), la ejecución queda FALLIDA, se muestran los candidatos calculados con la etiqueta "sin análisis de IA" y no se crean órdenes.
+
+Además: si no hay candidatos no se llama al modelo (la ejecución se completa con ese resultado); solo puede haber una ejecución en curso por agente (409 `EJECUCION_EN_CURSO`), y una ejecución EN_CURSO de más de 10 minutos se marca FALLIDA como interrumpida.
 
 ---
 
@@ -207,16 +213,18 @@ Con las herramientas comerciales y `obtenerResultadoAgenteInventario`, el modelo
   "recomendaciones": [{
     "tipo": "PROMOCION|LIQUIDACION|REVISION_SUCURSAL|OTRA",
     "prioridad": "ALTA|MEDIA|BAJA",
-    "productoId": 0, "sucursalId": 0,
+    "sku": "string (opcional)", "sucursal": "string (opcional)",
     "titulo": "string", "justificacion": "string"
   }]
 }
 ```
 
+El modelo se refiere a productos por SKU y a sucursales por nombre; el código los convierte en ids. Cada hallazgo se valida contra la lista de KPI y gráficos permitidos (KPI-01 a KPI-08, G-01 a G-04).
+
 ### 6.4 Reglas de coherencia aplicadas en código
 
-- **No se acepta una recomendación de PROMOCION** para un producto que el Agente 1 marcó en riesgo de agotamiento. Se descarta automáticamente y queda registrada como "descartada por regla de coherencia".
-- Los productos y sucursales referenciados deben existir.
+- **No se acepta una recomendación de PROMOCION ni de LIQUIDACION** para un producto que el Agente 1 marcó en riesgo de agotamiento. Se descarta automáticamente y queda registrada como "descartada por regla de coherencia". Si la recomendación indica sucursal se compara el par producto-sucursal; si no, basta con que el producto esté en riesgo en alguna sucursal. Si no hay una ejecución del Agente 1 para considerar, la regla usa los productos en riesgo que calcula el sistema (`productosEnRiesgo`).
+- Los productos y sucursales referenciados deben existir; si se indicó una sucursal para la ejecución, las recomendaciones de otra sucursal se descartan.
 - Cada hallazgo debe citar un KPI o gráfico. En la interfaz, junto al hallazgo, se muestra el valor actual de ese KPI calculado por el servicio, para facilitar el contraste.
 
 Las recomendaciones válidas se guardan como PENDIENTES (RN-18).
@@ -250,7 +258,23 @@ sequenceDiagram
 3. **Regla de coherencia entre agentes:** §6.4.
 4. **Consumo por el chatbot:** `ultimasEjecucionesAgentes` permite preguntar al chatbot por el último informe.
 
-El resumen consolidado se redacta con una llamada final al modelo a partir de ambos resultados. Si falla, se usa una plantilla determinista.
+El resumen consolidado se redacta con una llamada final al modelo a partir de ambos resultados. Si falla, se usa una plantilla determinista. Si el Agente 1 no se completa, el Agente 2 no se ejecuta y el informe queda FALLIDA; si falla el Agente 2, el informe queda FALLIDA con el resumen de plantilla y las órdenes ya creadas por el Agente 1.
+
+### 7.1 Implementación (Fase 7)
+
+| Pieza | Archivo | Qué hace |
+|---|---|---|
+| Reglas en código | `src/lib/agentes.ts` | Fórmula de reposición (§5.2), aplicación de las decisiones del modelo (ids inexistentes descartados, prioridad solo hacia arriba, cantidades del código), agrupación en órdenes por proveedor y sucursal, regla de coherencia (§6.4) |
+| Esquemas | `src/lib/esquemas/agentes.ts` | Entradas de la API, salidas del modelo (Zod) y etiquetas |
+| Datos | `datosReposicion` en `src/server/servicios/kpi.ts` | Stock, umbrales, venta diaria de 28 días y unidades en tránsito por producto y sucursal |
+| Herramientas | `src/server/ia/herramientas-agentes.ts` | `calcularPropuestaReposicion`, `obtenerResultadoAgenteInventario` y la selección de herramientas de cada agente |
+| Instrucciones | `src/server/ia/instrucciones.ts` | Instrucciones del Agente 1, del Agente 2, de la salida JSON y del informe |
+| Servicio | `src/server/servicios/agentes.ts` | Ejecución de cada agente y del informe, registro en `ejecucion_agente`, órdenes en BORRADOR con `crearOrdenBorrador`, recomendaciones PENDIENTES, auditoría `AGENTE_EJECUTADO` / `AGENTE_FALLIDO`; tiempo límite de 90 s por llamada al modelo |
+| Validación humana | `src/server/servicios/recomendaciones.ts` | Aceptar o descartar con actualización condicional (una sola decisión), comentario obligatorio al descartar, auditoría |
+| API | `/api/agentes/*`, `/api/recomendaciones/*` | `04-REQ` §4.7 |
+| Interfaz | `src/app/(app)/agentes/` | Ejecutar agentes, recomendaciones por validar, historial y detalle de cada ejecución con etiqueta de IA, herramientas usadas, cantidades del código, órdenes creadas y reglas aplicadas |
+
+Pruebas: `tests/unit/agentes.test.ts` (PRU-U02 y PRU-U07). Los escenarios PRU-I09 y PRU-I10 se verificaron con un modelo simulado contra la base local; en la Fase 8 se automatizan sobre el esquema `test`. `scripts/pruebas-agentes-fase07.ps1` ejecuta PRU-C09 y PRU-C10 con Gemini real.
 
 ---
 

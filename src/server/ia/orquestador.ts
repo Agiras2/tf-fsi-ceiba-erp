@@ -20,6 +20,7 @@ export async function conversarConHerramientas(opciones: {
   ctx: Contexto;
   nivel: NivelRazonamiento;
   maxRondas?: number;
+  tiempoLimiteMs?: number;
 }): Promise<ResultadoConversacion> {
   const { modelo, sistema, herramientas, ctx, nivel } = opciones;
   const maxRondas = opciones.maxRondas ?? MAX_RONDAS;
@@ -31,7 +32,10 @@ export async function conversarConHerramientas(opciones: {
   for (let ronda = 1; ; ronda++) {
     // En la ultima ronda se pide texto sin herramientas para garantizar una respuesta.
     const ultima = ronda > maxRondas;
-    const r = await modelo.generar({ sistema, contenidos, herramientas: declaraciones, nivel, modoHerramientas: ultima ? "ninguna" : "auto" });
+    const r = await modelo.generar({
+      sistema, contenidos, herramientas: declaraciones, nivel, modoHerramientas: ultima ? "ninguna" : "auto",
+      tiempoLimiteMs: opciones.tiempoLimiteMs,
+    });
     usado = r.modelo ?? usado;
     if (ultima || r.llamadas.length === 0) {
       return { texto: r.texto.trim(), llamadas, rondas: ronda, modelo: usado };

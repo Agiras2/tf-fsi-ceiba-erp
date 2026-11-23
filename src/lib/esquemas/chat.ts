@@ -48,4 +48,6 @@ export const ETIQUETA_HERRAMIENTA: Record<string, string> = {
   margenPorCategoria: "Margen por categoría",
   clientesRecurrentes: "Clientes recurrentes (KPI-07)",
   ultimasEjecucionesAgentes: "Últimos informes de los agentes",
+  calcularPropuestaReposicion: "Propuesta de reposición calculada por el sistema",
+  obtenerResultadoAgenteInventario: "Resultado del analista de inventario",
 };

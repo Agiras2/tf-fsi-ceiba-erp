@@ -108,6 +108,12 @@ Cómo se ejecutan las pruebas del chatbot (Fase 6):
 | PRU-C10 | Ejecutar el Agente 2 | Hallazgos que citan KPI con valores coincidentes; ninguna promoción de un producto en riesgo |
 | PRU-C11 | Servicio de IA no disponible (clave inválida en local) | 503 con mensaje comprensible; el resto del ERP funciona |
 
+Cómo se ejecutan las pruebas de los agentes (Fase 7):
+
+- **Unitarias** (`tests/unit/agentes.test.ts`): PRU-U02 (fórmula de reposición: agotado, sin ventas, en tránsito, tope en el máximo, prioridades, redondeo) y PRU-U07 (decisiones del modelo con candidatos inexistentes y prioridades que solo suben, agrupación de órdenes, regla de coherencia, validación Zod de las salidas, entradas estrictas y herramientas que no se ofrecen en el chatbot).
+- **Con modelo simulado contra la base local** (verificación previa de PRU-I09 y PRU-I10): con una IA que falla, la ejecución queda FALLIDA con los candidatos "sin análisis de IA" y ninguna orden; con una IA simulada que excluye un candidato, sube una prioridad, intenta bajar otra e inventa un candidato, las órdenes BORRADOR usan exactamente las cantidades del código, el excluido no aparece y el inventado se ignora; el Agente 2 queda ligado al Agente 1 (`ejecucionEntradaId` y `ejecucionPadreId`), la promoción de un producto en riesgo y el SKU inexistente se descartan, y una segunda decisión sobre la misma recomendación responde 409.
+- **Con Gemini real** (`scripts/pruebas-agentes-fase07.ps1`): permisos (cajero y bodega 403; el administrador no decide recomendaciones), validación de entradas (400), PRU-C09 y PRU-C10 mediante el informe ejecutivo, y las verificaciones automáticas de órdenes BORRADOR con origen IA, encadenamiento, coherencia y decisión del gerente. El texto de cada análisis se revisa a mano.
+
 ## 6. TestSprite (Fase 10)
 
 1. Generar el plan sobre la URL desplegada con usuarios de demostración.

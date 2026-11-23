@@ -218,10 +218,11 @@ Patrón para `usuarios`, `sucursales`, `categorias`, `proveedores`, `productos` 
 | GET | `/chat/conversaciones/{id}` | Todos | Mensajes de una conversación propia |
 | POST | `/agentes/inventario` | ADM, GER | Ejecutar el Agente 1 `{ sucursalId? }` |
 | POST | `/agentes/comercial` | ADM, GER | Ejecutar el Agente 2 `{ desde?, hasta?, sucursalId?, ejecucionInventarioId? }` |
-| POST | `/agentes/informe-ejecutivo` | ADM, GER | Ejecutar el Agente 1 y luego el Agente 2 |
+| POST | `/agentes/informe-ejecutivo` | ADM, GER | Ejecutar el Agente 1 y luego el Agente 2 `{ desde?, hasta?, sucursalId? }` |
 | GET | `/agentes/ejecuciones?agente=&estado=` | ADM, GER | Historial |
 | GET | `/agentes/ejecuciones/{id}` | ADM, GER | Detalle con herramientas y salida |
-| GET | `/recomendaciones?estado=&tipo=` | ADM, GER | Listar |
+| GET | `/recomendaciones?estado=&tipo=&prioridad=&q=` | ADM, GER | Listar |
+| GET | `/recomendaciones/{id}` | ADM, GER | Detalle |
 | POST | `/recomendaciones/{id}/aceptar` | GER | Aceptar `{ comentario? }` |
 | POST | `/recomendaciones/{id}/descartar` | GER | Descartar `{ comentario }` |
 
