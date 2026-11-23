@@ -5,7 +5,7 @@ import { ETIQUETA_HERRAMIENTA, type FuenteConsultada, type MensajeChat } from "@
 import { TextoIA } from "@/components/comun/texto-ia";
 
 /** Fuentes consultadas: herramienta y filtros que aplico el servidor (RF-34). */
-function Fuentes({ fuentes }: { fuentes: FuenteConsultada[] }) {
+export function Fuentes({ fuentes }: { fuentes: FuenteConsultada[] }) {
   if (fuentes.length === 0) {
     return <p className="text-xs text-muted-foreground">Fuentes consultadas: ninguna. La respuesta no usó datos del sistema.</p>;
   }

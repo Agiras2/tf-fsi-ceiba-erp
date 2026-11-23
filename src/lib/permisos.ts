@@ -119,3 +119,15 @@ export function reportesPermitidos(rol: Rol) {
     proveedores: incluye(PERMISOS_REPORTES.proveedores),
   };
 }
+
+/** Agentes de IA (docs/04-REQ RF-36 a RF-39 y RF-41): direccion ejecuta y consulta. */
+export const PERMISOS_AGENTES = {
+  leer: ["ADMIN", "GERENTE"],
+  ejecutar: ["ADMIN", "GERENTE"],
+} as const satisfies Record<string, readonly Rol[]>;
+
+/** Recomendaciones de IA (RF-40, RN-18): solo el gerente decide; el administrador consulta. */
+export const PERMISOS_RECOMENDACIONES = {
+  leer: ["ADMIN", "GERENTE"],
+  decidir: ["GERENTE"],
+} as const satisfies Record<string, readonly Rol[]>;
