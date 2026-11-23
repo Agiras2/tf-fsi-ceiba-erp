@@ -19,7 +19,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | G4-05 | Al menos dos agentes con responsabilidades diferentes | Analista de inventario y analista comercial | 7 | OBL-6, OBL-7 | RF-36–RF-41 | ✅ |
 | G4-06 | Dashboard con mínimo seis KPI | Ocho KPI calculados por consultas | 5 | OBL-1, OBL-8 | RF-24–RF-29, `06-KPI` | 🟡 |
 | G4-07 | Interacción del usuario con los módulos principales | Interfaz por rol | 2–7 | Capturas por módulo | RNF-01 | 🟡 |
-| G4-08 | Validaciones, manejo de errores y pruebas básicas | Zod, códigos HTTP, Vitest, PowerShell | 3–8 | Resultados de pruebas | RNF-03, RNF-06, `10-PRU` | 🟡 |
+| G4-08 | Validaciones, manejo de errores y pruebas básicas | Zod, códigos HTTP, Vitest, PowerShell | 3–8 | Resultados de pruebas | RNF-03, RNF-06, `10-PRU` | ✅ |
 | G4-09 | Repositorio GitHub con documentación para ejecutar | README, `docs/`, `.env.example` | 11 | URL del repositorio | RNF-10 | ⏳ |
 | G4-10 | No ser una interfaz estática con datos simulados | Todos los procesos se ejecutan contra la base de datos | 2–7 | Flujo completo (OBL-4) | RF-16–RF-22 | 🟡 |
 
@@ -43,7 +43,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 |---|---|---|---|---|---|
 | G7-01 | No basta un campo de texto con preguntas genéricas al modelo | El modelo solo responde a partir de herramientas que consultan la BD | 6 | RF-31, `07-IAG` §1 | ✅ |
 | G7-02 | Chatbot consulta datos reales o funciones de negocio | Herramientas compartidas con el dashboard | 6 | RF-31, `07-IAG` §3 | ✅ |
-| G7-03 | Chatbot indica cuando no tiene información | Instrucción de sistema y prueba específica | 6, 8 | RF-33 | 🟡 |
+| G7-03 | Chatbot indica cuando no tiene información | Instrucción de sistema y prueba específica | 6, 8 | RF-33 | ✅ |
 | G7-04 | Agente de inventario: existencias, bajo mínimo, reposición, criterios | Agente 1 | 7 | RF-36, RF-37, `07-IAG` §5 | ✅ |
 | G7-05 | Agente comercial: ventas, tendencias, acciones, contraste con dashboard | Agente 2 | 7 | RF-38, `07-IAG` §6 | ✅ |
 | G7-06 | Mecanismos de interacción definidos entre agentes | El Agente 2 consume la salida registrada del Agente 1 | 7 | RF-39, `07-IAG` §7 | ✅ |
@@ -65,10 +65,10 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 |---|---|---|---|---|
 | G10-01 | Usabilidad | Navegación consistente por rol, componentes shadcn/ui | RNF-01 | ⏳ |
 | G10-02 | Seguridad | Validación de entradas, autorización en servidor, secretos fuera del repo, usuario de BD de mínimo privilegio | RNF-02, `09-SEG` | 🟡 |
-| G10-03 | Integridad | Transacciones, reglas de negocio y estados controlados | RNF-03 | 🟡 |
+| G10-03 | Integridad | Transacciones, reglas de negocio y estados controlados | RNF-03 | ✅ |
 | G10-04 | Mantenibilidad | Código modular por capas (`08-ARQ`) | RNF-04, `08-ARQ` | 🟡 |
 | G10-05 | Trazabilidad | Auditoría de operaciones y registro de ejecuciones de agentes | RNF-05, RF-04 | 🟡 |
-| G10-06 | Confiabilidad | Manejo de errores con mensajes comprensibles | RNF-06 | 🟡 |
+| G10-06 | Confiabilidad | Manejo de errores con mensajes comprensibles | RNF-06 | ✅ |
 | G10-07 | Privacidad | Datos ficticios, sin secretos en el repositorio | RNF-07 | ✅ |
 | G10-08 | Transparencia de IA | Etiqueta en respuestas de IA y recomendaciones con validación humana | RNF-08, RF-34 | ✅ |
 

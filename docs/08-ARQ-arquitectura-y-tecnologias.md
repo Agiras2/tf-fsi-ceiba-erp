@@ -97,9 +97,9 @@ tf-fsi-ceiba-erp/
 │       │   └── instrucciones.ts   Instrucciones del chatbot y de los agentes
 │       └── errores.ts             Errores de dominio → códigos HTTP
 ├── tests/
-│   ├── unit/                      Vitest sin BD
-│   ├── integracion/               Vitest contra la BD de pruebas
-│   └── seguridad/                 Scripts PowerShell (10-PRU §4)
+│   ├── unit/                      Vitest sin BD (vitest.config.mts)
+│   └── integracion/               Vitest contra el esquema "test" (vitest.integracion.config.mts)
+├── scripts/                       Pruebas de API y seguridad en PowerShell (10-PRU §4) y verificación de la BD
 ├── .env.example
 ├── README.md
 └── package.json
