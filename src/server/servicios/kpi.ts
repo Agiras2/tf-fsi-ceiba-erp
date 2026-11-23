@@ -469,3 +469,97 @@ export async function lineasVentas(f: FiltrosKpi): Promise<LineaVentaReporte[]> 
   }
   return filas;
 }
+
+// ------------------------------------------------------------
+// Consultas adicionales para las herramientas de IA (docs/07-IAG seccion 3)
+// ------------------------------------------------------------
+
+export const VENTANA_DEMANDA_DIAS = 28;
+
+export type ProductoEnRiesgo = Omit<Alerta, "estado"> & {
+  estado: "AGOTADO" | "BAJO_MINIMO" | "NORMAL" | "SOBRESTOCK";
+  ventaDiaria: number;
+  coberturaDias: number | null;
+  motivo: "AGOTADO" | "BAJO_MINIMO" | "COBERTURA_MENOR_AL_TIEMPO_DE_ENTREGA";
+};
+
+/**
+ * Productos en riesgo de agotamiento: agotados, bajo minimo o con cobertura menor al
+ * tiempo de entrega del proveedor. La demanda es la venta diaria promedio de los
+ * ultimos 28 dias completos (la misma base que usara el Agente 1).
+ */
+export async function productosEnRiesgo(f: Pick<FiltrosKpi, "sucursalId" | "categoriaId">): Promise<ProductoEnRiesgo[]> {
+  const hoy = hoyBogota();
+  const ini = ts(inicioDiaBogota(sumarDias(hoy, -VENTANA_DEMANDA_DIAS)));
+  const fin = ts(inicioDiaBogota(hoy));
+  const filas = await prisma.$queryRaw<{
+    inventario_id: number; sucursal_id: number; sucursal: string; producto_id: number; sku: string; producto: string;
+    categoria: string; proveedor: string; tiempo: number; stock: number; minimo: number; maximo: number;
+    diaria: number; cobertura: number | null; en_pedido: boolean;
+  }[]>`
+    WITH demanda AS (
+      SELECT v.sucursal_id, dv.producto_id, SUM(dv.cantidad)::numeric / ${VENTANA_DEMANDA_DIAS} AS diaria
+      FROM ${T("detalle_venta")} dv JOIN ${T("venta")} v ON v.id = dv.venta_id
+      WHERE v.estado = 'REGISTRADA' AND v.fecha >= ${ini} AND v.fecha < ${fin}
+      GROUP BY v.sucursal_id, dv.producto_id
+    )
+    SELECT i.id AS inventario_id, s.id AS sucursal_id, s.nombre AS sucursal, p.id AS producto_id, p.sku, p.nombre AS producto,
+           c.nombre AS categoria, pr.nombre AS proveedor, pr.tiempo_entrega_dias AS tiempo,
+           i.stock, i.stock_minimo AS minimo, i.stock_maximo AS maximo,
+           COALESCE(d.diaria, 0)::float8 AS diaria,
+           CASE WHEN COALESCE(d.diaria, 0) = 0 THEN NULL ELSE (i.stock / d.diaria)::float8 END AS cobertura,
+           EXISTS (
+             SELECT 1 FROM ${T("orden_compra")} oc
+             JOIN ${T("detalle_orden_compra")} dd ON dd.orden_compra_id = oc.id
+             WHERE oc.sucursal_id = i.sucursal_id AND dd.producto_id = i.producto_id AND oc.estado IN ('BORRADOR', 'APROBADA')
+           ) AS en_pedido
+    FROM ${T("inventario")} i
+    JOIN ${T("producto")} p ON p.id = i.producto_id
+    JOIN ${T("categoria")} c ON c.id = p.categoria_id
+    JOIN ${T("proveedor")} pr ON pr.id = p.proveedor_id
+    JOIN ${T("sucursal")} s ON s.id = i.sucursal_id
+    LEFT JOIN demanda d ON d.sucursal_id = i.sucursal_id AND d.producto_id = i.producto_id
+    WHERE p.activo AND s.activa
+      AND (i.stock = 0 OR i.stock <= i.stock_minimo OR (COALESCE(d.diaria, 0) > 0 AND i.stock / d.diaria < pr.tiempo_entrega_dias))
+      AND ${condSucursal(Prisma.sql`i.sucursal_id`, f.sucursalId)} AND ${condCategoria(f.categoriaId)}
+    ORDER BY (i.stock = 0) DESC, cobertura ASC NULLS LAST, p.nombre, s.nombre`;
+  return filas.map((r) => {
+    const estado = r.stock === 0 ? "AGOTADO" : r.stock <= r.minimo ? "BAJO_MINIMO" : r.stock > r.maximo ? "SOBRESTOCK" : "NORMAL";
+    return {
+      inventarioId: r.inventario_id, sucursalId: r.sucursal_id, sucursal: r.sucursal, productoId: r.producto_id, sku: r.sku,
+      producto: r.producto, categoria: r.categoria, proveedor: r.proveedor, tiempoEntregaDias: r.tiempo, stock: r.stock,
+      stockMinimo: r.minimo, stockMaximo: r.maximo, enPedido: r.en_pedido, estado,
+      ventaDiaria: redondear(r.diaria), coberturaDias: r.cobertura === null ? null : redondear(r.cobertura, 1),
+      motivo: estado === "AGOTADO" ? "AGOTADO" : estado === "BAJO_MINIMO" ? "BAJO_MINIMO" : "COBERTURA_MENOR_AL_TIEMPO_DE_ENTREGA",
+    };
+  });
+}
+
+/** Ventas por semana (lunes a domingo) y categoria (herramienta tendenciaVentas). */
+export async function tendenciaSemanal(f: FiltrosKpi) {
+  const { ini, fin } = limites(f);
+  return prisma.$queryRaw<{ semana: string; categoria: string; ventas: number; unidades: number }[]>`
+    SELECT to_char(date_trunc('week', v.fecha AT TIME ZONE 'America/Bogota')::date, 'YYYY-MM-DD') AS semana,
+           c.nombre AS categoria, SUM(dv.subtotal)::float8 AS ventas, SUM(dv.cantidad)::int AS unidades
+    FROM ${T("detalle_venta")} dv
+    JOIN ${T("venta")} v ON v.id = dv.venta_id
+    JOIN ${T("producto")} p ON p.id = dv.producto_id
+    JOIN ${T("categoria")} c ON c.id = p.categoria_id
+    WHERE v.estado = 'REGISTRADA' AND v.fecha >= ${ini} AND v.fecha < ${fin}
+      AND ${condSucursal(Prisma.sql`v.sucursal_id`, f.sucursalId)} AND ${condCategoria(f.categoriaId)}
+    GROUP BY 1, 2
+    ORDER BY 1, 2`;
+}
+
+/** Clientes con mas compras en el periodo (herramienta clientesRecurrentes). Sin datos de contacto. */
+export async function clientesConMasCompras(f: FiltrosKpi, limite = 10) {
+  const { ini, fin } = limites(f);
+  return prisma.$queryRaw<{ cliente: string; compras: number; total: number }[]>`
+    SELECT cl.nombre AS cliente, COUNT(*)::int AS compras, SUM(v.total)::float8 AS total
+    FROM ${T("venta")} v JOIN ${T("cliente")} cl ON cl.id = v.cliente_id
+    WHERE v.estado = 'REGISTRADA' AND v.fecha >= ${ini} AND v.fecha < ${fin}
+      AND ${condSucursal(Prisma.sql`v.sucursal_id`, f.sucursalId)}
+    GROUP BY cl.id, cl.nombre
+    ORDER BY compras DESC, total DESC, cl.nombre
+    LIMIT ${Math.min(Math.max(limite, 1), 20)}`;
+}
