@@ -94,13 +94,17 @@ async function terminar(
   }));
 }
 
-/** JSON Schema para Gemini a partir del esquema Zod, sin palabras clave que el modelo no necesita. */
-function esquemaParaModelo(esquema: z.ZodType): unknown {
+/**
+ * JSON Schema para Gemini a partir del esquema Zod, sin palabras clave que el modelo no
+ * necesita. Los limites de longitud y de cantidad de elementos se quitan porque hacen que
+ * el proveedor rechace el esquema ("too many states for serving"); Zod los valida despues.
+ */
+export function esquemaParaModelo(esquema: z.ZodType): unknown {
   const limpiar = (v: unknown): unknown => {
     if (Array.isArray(v)) return v.map(limpiar);
     if (v && typeof v === "object") {
       return Object.fromEntries(Object.entries(v)
-        .filter(([k]) => !["$schema", "additionalProperties", "minLength", "maxLength"].includes(k))
+        .filter(([k]) => !["$schema", "additionalProperties", "minLength", "maxLength", "minItems", "maxItems"].includes(k))
         .map(([k, x]) => [k, limpiar(x)]));
     }
     return v;

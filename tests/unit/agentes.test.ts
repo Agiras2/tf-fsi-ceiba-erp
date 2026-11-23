@@ -11,7 +11,7 @@ import {
 } from "@/lib/esquemas/agentes";
 import { herramientasParaRol } from "@/server/ia/herramientas";
 import { candidatoParaModelo, herramientasAgenteComercial, herramientasAgenteInventario } from "@/server/ia/herramientas-agentes";
-import { resumenPlantilla } from "@/server/servicios/agentes";
+import { esquemaParaModelo, resumenPlantilla } from "@/server/servicios/agentes";
 
 const fila = (cambios: Partial<FilaReposicion> = {}): FilaReposicion => ({
   productoId: 1, sku: "ABA-001", producto: "Arroz", categoria: "Abarrotes", sucursalId: 10, sucursal: "Ceiba Centro",
@@ -155,6 +155,14 @@ describe("Salidas del modelo validadas con Zod", () => {
     };
     expect(esquemaSalidaComercial.safeParse(comercial).success).toBe(false);
     expect(esquemaSalidaComercial.safeParse({ ...comercial, hallazgos: [{ ...comercial.hallazgos[0], kpiRelacionado: "G-02" }] }).success).toBe(true);
+  });
+
+  it("el esquema enviado al modelo no lleva límites de longitud ni de cantidad", () => {
+    const texto = JSON.stringify([esquemaParaModelo(esquemaSalidaInventario), esquemaParaModelo(esquemaSalidaComercial)]);
+    for (const clave of ["maxItems", "minItems", "maxLength", "minLength", "additionalProperties", "$schema"]) {
+      expect(texto).not.toContain(`"${clave}"`);
+    }
+    expect(texto).toContain('"enum"');
   });
 
   it("extrae el JSON aunque venga entre bloques de código", () => {

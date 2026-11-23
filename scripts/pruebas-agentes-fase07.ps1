@@ -7,9 +7,11 @@
 #   powershell -ExecutionPolicy Bypass -File .\scripts\pruebas-agentes-fase07.ps1
 #   powershell -ExecutionPolicy Bypass -File .\scripts\pruebas-agentes-fase07.ps1 -Sucursal Envigado
 #   powershell -ExecutionPolicy Bypass -File .\scripts\pruebas-agentes-fase07.ps1 -SinIA   (solo permisos y validaciones)
+#   powershell -ExecutionPolicy Bypass -File .\scripts\pruebas-agentes-fase07.ps1 -Inventario 42
+#     (solo el Agente 2, con la salida de la ejecucion 42 del Agente 1; gasta menos cuota)
 # La clave de los usuarios demo se pide oculta y no se imprime ni se guarda.
 # ============================================================
-param([string]$Base = "http://localhost:3000", [string]$Sucursal = "Bello", [switch]$SinIA)
+param([string]$Base = "http://localhost:3000", [string]$Sucursal = "Bello", [switch]$SinIA, [int]$Inventario = 0)
 
 $ErrorActionPreference = "Stop"
 $sec = Read-Host "Clave de los usuarios demo" -AsSecureString
@@ -119,20 +121,32 @@ $sucs = Llamar $ger "GET" "/api/sucursales?tamano=100"
 $suc = @($sucs.Datos.datos | Where-Object { $_.nombre -like "*$Sucursal*" })[0]
 if (-not $suc) { Write-Host "No existe una sucursal que contenga '$Sucursal'." -ForegroundColor Red; exit 1 }
 
+$i = $null
 Write-Host ""
-Write-Host "Informe ejecutivo para $($suc.nombre): Agente 1 y luego Agente 2. Puede tardar de 1 a 3 minutos..." -ForegroundColor Cyan
-$inicio = Get-Date
-$inf = Llamar $ger "POST" "/api/agentes/informe-ejecutivo" @{ sucursalId = $suc.id } 600
-Write-Host ("      Tiempo total: {0:N0} s" -f ((Get-Date) - $inicio).TotalSeconds)
-Ver "I01" "Informe ejecutivo responde" 200 $inf
-if ($inf.Estado -ne 200) { Write-Host "Sin respuesta del informe: revise la consola del servidor." -ForegroundColor Yellow; exit 1 }
-$i = $inf.Datos
-Write-Host ("      Estado: {0}  Modelo: {1}  Error: {2}" -f $i.estado, $i.modelo, $i.error)
-Cumple "I02" "Informe COMPLETADA con dos agentes encadenados" ($i.estado -eq "COMPLETADA" -and @($i.hijas).Count -eq 2)
-Write-Host ("      Resumen: {0}" -f (Texto $i.resumen 500))
-
-$h1 = @($i.hijas | Where-Object { $_.agente -eq "INVENTARIO" })[0]
-$h2 = @($i.hijas | Where-Object { $_.agente -eq "COMERCIAL" })[0]
+if ($Inventario -gt 0) {
+  # Solo el Agente 2, con la salida registrada de una ejecucion del Agente 1 (RF-38).
+  Write-Host "Agente 2 para $($suc.nombre) con la ejecucion #$Inventario del Agente 1. Puede tardar 1 o 2 minutos..." -ForegroundColor Cyan
+  $inicio = Get-Date
+  $res = Llamar $ger "POST" "/api/agentes/comercial" @{ sucursalId = $suc.id; ejecucionInventarioId = $Inventario } 600
+  Write-Host ("      Tiempo total: {0:N0} s" -f ((Get-Date) - $inicio).TotalSeconds)
+  Ver "I01" "Agente 2 responde" 200 $res
+  if ($res.Estado -ne 200) { Write-Host "Sin respuesta del Agente 2: revise la consola del servidor." -ForegroundColor Yellow; exit 1 }
+  $h1 = @{ id = $Inventario }
+  $h2 = @{ id = $res.Datos.id }
+} else {
+  Write-Host "Informe ejecutivo para $($suc.nombre): Agente 1 y luego Agente 2. Puede tardar de 1 a 3 minutos..." -ForegroundColor Cyan
+  $inicio = Get-Date
+  $inf = Llamar $ger "POST" "/api/agentes/informe-ejecutivo" @{ sucursalId = $suc.id } 600
+  Write-Host ("      Tiempo total: {0:N0} s" -f ((Get-Date) - $inicio).TotalSeconds)
+  Ver "I01" "Informe ejecutivo responde" 200 $inf
+  if ($inf.Estado -ne 200) { Write-Host "Sin respuesta del informe: revise la consola del servidor." -ForegroundColor Yellow; exit 1 }
+  $i = $inf.Datos
+  Write-Host ("      Estado: {0}  Modelo: {1}  Error: {2}" -f $i.estado, $i.modelo, $i.error)
+  Cumple "I02" "Informe COMPLETADA con dos agentes encadenados" ($i.estado -eq "COMPLETADA" -and @($i.hijas).Count -eq 2)
+  Write-Host ("      Resumen: {0}" -f (Texto $i.resumen 500))
+  $h1 = @($i.hijas | Where-Object { $_.agente -eq "INVENTARIO" })[0]
+  $h2 = @($i.hijas | Where-Object { $_.agente -eq "COMERCIAL" })[0]
+}
 
 # PRU-C09: Agente 1
 if ($h1) {
@@ -173,6 +187,10 @@ if ($h2) {
   $r2 = $a2.resultado
   Write-Host ""
   Write-Host "C10  Agente 2 (ejecucion #$($a2.id), $($a2.estado), modelo $($a2.modelo), $([math]::Round($a2.duracionMs / 1000)) s)" -ForegroundColor Cyan
+  if ($a2.estado -ne "COMPLETADA") {
+    Write-Host ("      Error: {0}" -f $a2.error) -ForegroundColor Yellow
+    Cumple "C10" "Agente 2 completado" $false
+  } else {
   Write-Host ("      Herramientas: {0}" -f ((@($a2.herramientasUsadas) | ForEach-Object { $_.herramienta }) -join ", "))
   Write-Host ("      Resumen: {0}" -f (Texto $r2.resumen))
   foreach ($x in @($r2.hallazgos)) {
@@ -181,9 +199,14 @@ if ($h2) {
   foreach ($x in @($a2.recomendaciones)) { Write-Host ("      Recomendacion #{0} {1}/{2}: {3}" -f $x.id, $x.tipo, $x.prioridad, (Texto $x.titulo 100)) }
   foreach ($x in @($r2.descartadas)) { Write-Host ("      Descartada: {0} - {1}" -f (Texto $x.titulo 80), $x.motivo) -ForegroundColor DarkYellow }
   Cumple "C10" "Agente 2 completado" ($a2.estado -eq "COMPLETADA")
-  Cumple "C10" "Ligado al Agente 1 y al informe (entrada y padre)" ($a2.ejecucionEntrada.id -eq $h1.id -and $a2.ejecucionPadre.id -eq $i.id)
+  if ($i) {
+    Cumple "C10" "Ligado al Agente 1 y al informe (entrada y padre)" ($a2.ejecucionEntrada.id -eq $h1.id -and $a2.ejecucionPadre.id -eq $i.id)
+  } else {
+    Cumple "C10" "Ligado a la ejecucion #$($h1.id) del Agente 1 (entrada)" ($a2.ejecucionEntrada.id -eq $h1.id)
+  }
   Cumple "C10" "Usa la salida del Agente 1 (obtenerResultadoAgenteInventario)" ([bool](@($a2.herramientasUsadas) | Where-Object { $_.herramienta -eq "obtenerResultadoAgenteInventario" }))
-  Cumple "C10" "Cada hallazgo cita un KPI o grafico" (@($r2.hallazgos).Count -gt 0 -and -not (@($r2.hallazgos) | Where-Object { -not $_.kpiRelacionado }))
+  $hallazgos = @($r2.hallazgos | Where-Object { $_ })
+  Cumple "C10" "Cada hallazgo cita un KPI o grafico" ($hallazgos.Count -gt 0 -and -not ($hallazgos | Where-Object { -not $_.kpiRelacionado }))
   $skusRiesgo = @($r1.decisiones | ForEach-Object { $_.sku })
   $incoherentes = @($a2.recomendaciones | Where-Object { ($_.tipo -eq "PROMOCION" -or $_.tipo -eq "LIQUIDACION") -and $_.producto -and ($skusRiesgo -contains $_.producto.sku) })
   Cumple "C10" "Ninguna promocion o liquidacion de un producto en riesgo" ($incoherentes.Count -eq 0)
@@ -197,6 +220,7 @@ if ($h2) {
     if ($pend.Count -gt 1) {
       Ver "D03" "Descartar sin comentario" 400 (Llamar $ger "POST" "/api/recomendaciones/$($pend[1].id)/descartar" @{})
     }
+  }
   }
 }
 
