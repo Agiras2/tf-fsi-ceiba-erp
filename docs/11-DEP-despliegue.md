@@ -1,5 +1,7 @@
 # 11-DEP — Despliegue y mantenimiento
 
+**URL pública:** https://tf-fsi-ceiba-erp-production.up.railway.app
+
 Cómo se publica CeibaERP, qué variables necesita, cómo se verifica después de cada despliegue y cómo se mantiene activo. Complementa `08-ARQ` (arquitectura y conexión con la base de datos) y `09-SEG` (manejo de secretos).
 
 ---
@@ -28,7 +30,7 @@ La aplicación y la base de datos están en la misma región para que cada consu
 1. **New Project → Deploy from GitHub repo →** `Agiras2/tf-fsi-ceiba-erp`, rama `main`.
 2. **Variables** (sección 4): se escriben directamente en el panel del servicio.
 3. **Settings → Deploy:** región *US West (Oregon)*; *Healthcheck Path* `/api/health`; *Restart Policy* `On Failure`.
-4. **Settings → Networking → Generate Domain:** genera la URL pública `https://<servicio>.up.railway.app`.
+4. **Settings → Networking → Generate Domain** (puerto 8080, el que Railway entrega en `PORT`): genera la URL pública `https://tf-fsi-ceiba-erp-production.up.railway.app`.
 5. Railway despliega automáticamente cada *push* a `main` (es decir, cada *release*).
 
 **Volver a una versión anterior:** en *Deployments*, elegir un despliegue anterior y usar *Redeploy*.
@@ -48,9 +50,9 @@ La aplicación y la base de datos están en la misma región para que cada consu
 
 ## 5. Verificación después de desplegar
 
-1. `https://<servicio>.up.railway.app/api/health` responde `{"estado":"ok","baseDeDatos":"ok",...}`.
+1. `https://tf-fsi-ceiba-erp-production.up.railway.app/api/health` responde `{"estado":"ok","baseDeDatos":"ok",...}`.
 2. Inicio de sesión con los usuarios de demostración de cada rol y recorrido de los módulos.
-3. `scripts/pruebas-seguridad-fase08.ps1 -Base https://<servicio>.up.railway.app`: PRU-S01 a PRU-S12 contra la app desplegada.
+3. `scripts/pruebas-seguridad-fase08.ps1 -Base https://tf-fsi-ceiba-erp-production.up.railway.app`: PRU-S01 a PRU-S12 contra la app desplegada.
 4. Una pregunta al chatbot y la revisión de la etiqueta de IA.
 5. Los encabezados de seguridad (`09-SEG` §7) en la respuesta de cualquier página.
 
