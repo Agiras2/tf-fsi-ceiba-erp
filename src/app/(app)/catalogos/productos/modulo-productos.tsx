@@ -14,7 +14,7 @@ import { InsigniaEstado } from "@/components/comun/insignia-estado";
 import { Paginacion } from "@/components/comun/paginacion";
 import { useListado } from "@/hooks/use-listado";
 import { api, ErrorCliente } from "@/lib/api-cliente";
-import { formatoCOP } from "@/lib/formato";
+import { formatoCOP, formatoMargen } from "@/lib/formato";
 import type { Pagina } from "@/lib/esquemas/comunes";
 import { FormularioProducto } from "./formulario-producto";
 import type { Acciones, Opcion, Producto } from "./tipos";
@@ -143,7 +143,7 @@ export function ModuloProductos({
                     <TableCell className="max-w-48 truncate" title={p.proveedor.nombre}>{p.proveedor.nombre}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatoCOP(p.costo)}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatoCOP(p.precio)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{(((p.precio - p.costo) / p.precio) * 100).toFixed(1)} %</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatoMargen(p.precio, p.costo)}</TableCell>
                     <TableCell><InsigniaEstado activo={p.activo} /></TableCell>
                     {columnas === 9 && (
                       <TableCell className="text-right">
