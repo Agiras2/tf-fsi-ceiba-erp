@@ -29,6 +29,7 @@ Las contraseñas se entregan en la configuración de la prueba, no en este docum
 - `/login` muestra los campos **Correo** y **Contraseña** y el botón **Ingresar**.
 - Credenciales válidas: redirige a la página de inicio del rol (tabla anterior).
 - Credenciales inválidas: muestra un mensaje de error en el formulario y permanece en `/login`.
+- Protección contra fuerza bruta: 5 intentos fallidos con el mismo correo desde la misma IP en 15 minutos bloquean temporalmente ese correo. **Las pruebas de credenciales inválidas deben usar un correo inexistente** (por ejemplo, `noexiste@ceiba.test`), nunca el de una cuenta de prueba.
 - Sin sesión, cualquier página interna redirige a `/login`.
 - El menú de usuario (esquina superior) tiene la opción **Salir**, que cierra la sesión y vuelve a `/login`.
 
@@ -60,8 +61,8 @@ Usuarios y Auditoría son exclusivas del administrador: el gerente debe recibir 
 ### 5.1 Dashboard (gerente)
 Tarjetas de KPI (ventas, margen, rotación, agotados, cumplimiento de proveedores, entre otros) y gráficos alimentados por los datos de demostración. Tiene botones de periodo rápido (**7 días**, **30 días**, **90 días**) y filtros de sucursal ("Todas las sucursales" o una sucursal) y de categoría; al cambiarlos, los valores se recalculan.
 
-### 5.2 Catálogos (gerente)
-Listados con búsqueda, paginación y un formulario en diálogo para crear y editar. Categorías y Proveedores permiten crear, editar y desactivar/reactivar. Los campos obligatorios vacíos muestran mensajes de validación y no se guarda nada. Un registro duplicado (mismo nombre de categoría o mismo NIT de proveedor) muestra un mensaje de error.
+### 5.2 Catálogos
+Listados con búsqueda, filtros y paginación. **Crear, editar y desactivar productos, categorías, proveedores y sucursales es exclusivo del administrador**: para el gerente y la bodega esas pantallas son de solo lectura y no muestran los botones de crear, editar ni desactivar (comportamiento esperado, no un defecto). La única excepción es **Clientes**, donde el cajero puede registrar un cliente nuevo; los campos obligatorios vacíos muestran mensajes de validación y un documento repetido muestra un mensaje de error.
 
 ### 5.3 Inventario
 Existencias por producto y sucursal, con indicador de estado (**Agotado**, **Bajo mínimo**, **Normal**, **Sobrestock**). Cada fila permite abrir el **kardex** (historial de movimientos) en un diálogo.
@@ -74,9 +75,9 @@ Listado de ventas con filtros y detalle de cada venta (productos, cantidades, to
 
 ### 5.6 Órdenes de compra
 Estados: **BORRADOR → APROBADA → RECIBIDA** (o **CANCELADA**).
-- El gerente crea una orden con **Nueva orden de compra** (proveedor, sucursal, productos y cantidades); se guarda en BORRADOR con el mensaje "Orden #N creada en borrador.".
-- Solo el gerente aprueba una orden en BORRADOR (en el detalle de la orden).
-- Solo la bodega recibe una orden APROBADA de su sucursal; al recibir, la orden pasa a RECIBIDA y el stock aumenta.
+- **La bodega crea** la orden de su sucursal con **Nueva orden de compra** (proveedor, productos y cantidades); se guarda en BORRADOR con el mensaje "Orden #N creada en borrador.". El gerente no tiene ese botón (comportamiento esperado).
+- **El gerente aprueba** (o cancela) una orden en BORRADOR desde el detalle de la orden.
+- **La bodega recibe** una orden APROBADA de su sucursal; al recibir, la orden pasa a RECIBIDA y el stock aumenta.
 
 ### 5.7 Reportes (gerente)
 Tarjetas de reportes con rango de fechas y botón de descarga (la descarga está fuera de alcance) y una **vista previa en pantalla** del inventario agotado y bajo mínimo.
@@ -96,5 +97,6 @@ El usuario escribe una pregunta sobre el negocio (por ejemplo, "¿Cuáles son lo
 
 - Todo registro que creen las pruebas debe llevar el prefijo **"TS "** en el nombre (por ejemplo, "TS Categoría 01") para distinguirlo de los datos de demostración.
 - Las ventas se hacen en Ceiba Centro, con 1 o 2 unidades de productos que tengan stock.
+- El periodo por defecto del dashboard son los últimos 30 días completos **hasta ayer** (por diseño); el listado de Ventas sí incluye las del día.
 - No desactivar ni modificar registros de demostración existentes; crear los propios con el prefijo.
 - Hacer como máximo **una** pregunta al chatbot por prueba.
