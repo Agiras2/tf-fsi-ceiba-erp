@@ -1,7 +1,10 @@
 {
   "name": "ceiba-erp",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
+  "engines": {
+    "node": "22.x || 24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
