@@ -15,7 +15,7 @@
 
 **BD de pruebas:** un esquema `test` dentro del mismo proyecto de Supabase, con los mismos roles y privilegios que `public`. Las pruebas de integración crean y limpian sus datos solo en ese esquema y nunca tocan los datos de demostración. Las cadenas van en `DATABASE_URL_TEST` y `DIRECT_URL_TEST` (las mismas credenciales con el parámetro `schema=test`), solo en el `.env` local. El plan gratuito de Supabase limita a dos proyectos activos, así que se descartó un proyecto separado.
 
-**Comandos previstos:** `npm run test` (unitarias), `npm run test:integracion` y `npm run test:todo`.
+**Comandos:** `npm run test` (unitarias, sin base de datos), `npm run test:integracion` (contra el esquema `test`) y `npm run test:todo` (ambas). Las de integración se niegan a ejecutarse si `DATABASE_URL_TEST` no apunta a `schema=test`.
 
 ---
 
@@ -46,8 +46,13 @@
 | PRU-I08 | Eliminar un producto con ventas | Se desactiva, no se borra |
 | PRU-I09 | Agente 1 con Gemini simulado que devuelve cantidades distintas | Las órdenes BORRADOR usan las cantidades del código; se ignoran candidatos inexistentes |
 | PRU-I10 | Informe ejecutivo con Gemini simulado | El Agente 2 queda ligado al Agente 1 mediante `ejecucionEntradaId` y `ejecucionPadreId` |
+| PRU-I11 | Chatbot con Gemini simulado | Guarda pregunta y respuesta, continúa la conversación, no deja ver ni escribir en conversaciones ajenas (404) y, si la IA falla, responde 503 sin guardar nada |
 
 **Verificación previa (Fase 4).** Los escenarios PRU-I01 a PRU-I06 se verificaron contra una base local con la API: venta con descuento de stock, kardex y auditoría; venta con un ítem sin existencias (409 y ningún stock descontado); seis ventas simultáneas sobre dos unidades (dos confirmadas, cuatro con 409, stock final 0); anulación con restitución; ciclo BORRADOR → APROBADA → RECIBIDA con aprobaciones simultáneas (una 200 y dos 409), y recepción de un borrador (409). Las pruebas de API y seguridad de esta fase quedan en `scripts/pruebas-api-fase04.ps1` (PRU-I01, I04, I05, S03, S04, S05, S07 y S08). En la Fase 8 los escenarios de integración se automatizan sobre el esquema `test`. Las pruebas unitarias PRU-U03 y PRU-U04 están en `tests/unit/procesos.test.ts`.
+
+**Implementación (Fase 8).** Las pruebas de integración están en `tests/integracion/` y se ejecutan con `vitest.integracion.config.mts`, archivo por archivo y en serie. `preparar-entorno.ts` apunta la aplicación a `DATABASE_URL_TEST` y se detiene si el esquema no es `test`. `datos.ts` borra el esquema y crea un escenario pequeño de dos sucursales, dos proveedores y cuatro productos, con valores elegidos para calcular a mano los resultados; también trae el modelo de IA simulado, de modo que estas pruebas nunca llaman a Gemini. Archivos: `ventas.test.ts` (PRU-I01 a I04, I08 y PRU-S05 a nivel de servicio), `compras.test.ts` (PRU-I05, I06 y aprobaciones simultáneas), `kpi.test.ts` (PRU-I07, con los ocho KPI frente al cálculo manual, con y sin filtros), `agentes.test.ts` (PRU-I09, I10, falla de la IA, mercancía en tránsito y decisión del gerente) y `chat.test.ts` (PRU-I11). Usan el mismo rol `ceiba_app` de la aplicación.
+
+**Resultados (23/11/2026).** `npm test`: 109 pruebas unitarias en verde. `npm run db:verificar`: esquemas `public` y `test` con 17 de 17 tablas, 11 restricciones CHECK, sesión en UTC y `CREATE TABLE` rechazado para `ceiba_app`. `npm run test:integracion` contra el esquema `test` de Supabase: 20 de 20 en 138 s. Las seis ventas simultáneas sobre dos unidades dejaron dos confirmadas, cuatro con 409 y el stock en 0; los ocho KPI coincidieron con el cálculo manual con y sin filtros; las órdenes de los agentes usaron las cantidades del código.
 
 **Verificación de KPI (Fase 5).** Los ocho KPI del dashboard se compararon con `scripts/verificar-kpi.sql`. Primero sobre la base local sembrada, sin filtros (30 días) y con sucursal, categoría y otro periodo a la vez. Después en Supabase, con el periodo por defecto del 23/10/2026 al 21/11/2026: ventas $82.089.700, ticket $25.661,05, margen 25,58 %, agotamiento 1,67 %, baja rotación 6, cumplimiento 86,03 %, clientes recurrentes 292 y rotación 1,75. En todos los casos los valores coincidieron, también los del periodo anterior. PRU-U06 (semáforos e interpretación) está en `tests/unit/kpi.test.ts`.
 
@@ -86,6 +91,8 @@ try {
 ```
 
 `$env:DEMO_PWD` se define en la sesión de PowerShell sin imprimirse.
+
+**Implementación (Fase 8).** `scripts/pruebas-seguridad-fase08.ps1` ejecuta PRU-S01 a PRU-S12 contra la app local o desplegada (`-Base`). Pide la clave oculta, crea una orden de prueba en borrador y la cancela al final, sin cambiar el stock. Para PRU-S09 usa un correo inexistente, así que el bloqueo de 15 minutos nunca afecta una cuenta real. PRU-S11 altera un carácter de la firma de la cookie de sesión y comprueba que la original sigue funcionando. PRU-S12 revisa que `/api/health` solo devuelva estado, base de datos y fecha. Resultado contra la app local (23/11/2026): 18 de 18 verificaciones (PRU-S01 a S12 con sus comprobaciones adicionales). En la Fase 9 se repite contra la app desplegada.
 
 ## 5. Chatbot y agentes
 
