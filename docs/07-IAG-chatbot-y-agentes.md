@@ -175,7 +175,7 @@ El modelo recibe los candidatos y puede consultar `cumplimientoProveedores`, `or
 }
 ```
 
-En `items` el modelo incluye **solo** los candidatos que excluye o cuya prioridad sube; los demás se incluyen con su prioridad base. Así la respuesta es corta y consume menos cuota. El proveedor de una alerta se indica por nombre, porque el modelo no conoce los ids internos. Los textos demasiado largos se recortan en lugar de invalidar toda la salida.
+En `items` el modelo incluye **solo** los candidatos que excluye o cuya prioridad sube; los demás se incluyen con su prioridad base. Así la respuesta es corta y consume menos cuota. El proveedor de una alerta se indica por nombre, porque el modelo no conoce los ids internos. Los textos demasiado largos y las listas con más elementos de los permitidos se recortan en lugar de invalidar toda la salida (el modelo no recibe esos límites, ver DEF-06 y DEF-07); un valor fuera de una enumeración sí la invalida.
 
 El análisis tiene dos pasos: primero el ciclo de llamadas a herramientas (nivel de razonamiento medio), que termina en un análisis en texto; después, una llamada sin herramientas con `responseJsonSchema` (nivel bajo) que convierte ese análisis y la lista de candidatos en el JSON anterior.
 

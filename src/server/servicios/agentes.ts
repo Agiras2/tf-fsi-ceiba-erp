@@ -165,6 +165,7 @@ function textoParaJsonInventario(candidatos: Candidato[], analisis: string): str
 
 En "items" incluye solo los candidatos que se excluyen (incluir=false) o cuya prioridad sube; los demás se
 incluyen automáticamente con su prioridad base. Usa los candidatoId exactamente como aparecen.
+Escribe entre 2 y 6 criterios y como máximo 4 alertas.
 
 Candidatos calculados por el sistema:
 ${lista}
@@ -327,8 +328,9 @@ async function resolverRecomendaciones(recs: SalidaComercial["recomendaciones"],
 function textoParaJsonComercial(analisis: string): string {
   return `${INSTRUCCION_SALIDA_JSON}
 
-Cada hallazgo debe citar en "kpiRelacionado" un KPI (KPI-01 a KPI-08) o gráfico (G-01 a G-04) y en "valor" la cifra
-exacta del análisis. En las recomendaciones de producto indica el SKU; en las de sucursal, su nombre.
+Incluye entre 3 y 6 hallazgos (los más relevantes) y entre 2 y 6 recomendaciones. Cada hallazgo debe citar en
+"kpiRelacionado" un KPI (KPI-01 a KPI-08) o gráfico (G-01 a G-04) y en "valor" la cifra exacta del análisis.
+En las recomendaciones de producto indica el SKU; en las de sucursal, su nombre.
 
 Análisis del agente:
 ${analisis || "(El agente no redactó un análisis.)"}`;

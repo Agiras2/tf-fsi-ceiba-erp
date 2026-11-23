@@ -148,6 +148,19 @@ describe("Salidas del modelo validadas con Zod", () => {
     expect(r.resumen.endsWith("…")).toBe(true);
   });
 
+  it("recorta las listas largas y los textos opcionales en lugar de rechazar la salida (DEF-07)", () => {
+    const hallazgo = { titulo: "t", detalle: "d", kpiRelacionado: "KPI-01", valor: "1" };
+    const rec = { tipo: "OTRA", prioridad: "BAJA", sku: "  ", sucursal: "x".repeat(100), titulo: "t", justificacion: "j" };
+    const r = esquemaSalidaComercial.parse({ resumen: "r", hallazgos: Array(11).fill(hallazgo), recomendaciones: Array(10).fill(rec) });
+    expect(r.hallazgos).toHaveLength(8);
+    expect(r.recomendaciones).toHaveLength(8);
+    expect(r.recomendaciones[0].sku).toBeUndefined();
+    expect(r.recomendaciones[0].sucursal).toHaveLength(60);
+    const inv = esquemaSalidaInventario.parse({ ...inventario, criterios: Array(12).fill("c"), alertas: Array(9).fill(inventario.alertas[0]) });
+    expect(inv.criterios).toHaveLength(8);
+    expect(inv.alertas).toHaveLength(6);
+  });
+
   it("rechaza prioridades o referencias del dashboard que no existen", () => {
     expect(esquemaSalidaInventario.safeParse({ ...inventario, items: [{ ...inventario.items[0], prioridad: "URGENTE" }] }).success).toBe(false);
     const comercial = {

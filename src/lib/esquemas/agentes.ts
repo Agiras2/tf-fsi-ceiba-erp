@@ -98,36 +98,42 @@ export const esquemaDescartarRecomendacion = z.object({ comentario: texto(5, 300
 
 // ------------------------------------------------------------
 // Salidas del modelo (docs/07-IAG 5.3 y 6.3), validadas con Zod en el servidor.
-// Los textos demasiado largos se recortan en lugar de invalidar toda la salida.
+// Los textos demasiado largos y las listas con mas elementos de los permitidos se
+// recortan en lugar de invalidar toda la salida (el modelo no recibe esos limites,
+// ver DEF-06); lo que no se puede recortar (enumeraciones, tipos) si la invalida.
 // ------------------------------------------------------------
 
 const textoIA = (max: number) =>
   z.string().trim().min(1).transform((s) => (s.length > max ? `${s.slice(0, max - 1)}…` : s));
 
+/** Texto opcional del modelo: vacio cuenta como ausente; se recorta al maximo. */
+const textoOpcionalIA = (max: number) =>
+  z.string().trim().optional().transform((s) => (s ? s.slice(0, max) : undefined));
+
+/** Lista del modelo que se recorta a "max" elementos. */
+const listaIA = <T extends z.ZodType>(elemento: T, max: number) =>
+  z.array(elemento).transform((a) => a.slice(0, max));
+
 export const esquemaSalidaInventario = z.object({
   resumen: textoIA(1500).describe("Resumen ejecutivo de la propuesta de reposición, en 2 a 4 frases."),
-  criterios: z.array(textoIA(300)).min(1).max(8).describe("Criterios de priorización aplicados, uno por elemento."),
-  items: z
-    .array(
+  criterios: listaIA(textoIA(300), 8).describe("Criterios de priorización aplicados (entre 2 y 6), uno por elemento."),
+  items: listaIA(
       z.object({
-        candidatoId: z.string().trim().max(40).describe("Identificador del candidato, tal como lo devolvió calcularPropuestaReposicion."),
+        candidatoId: z.string().trim().describe("Identificador del candidato, tal como lo devolvió calcularPropuestaReposicion."),
         incluir: z.boolean().describe("false para excluir el candidato de la propuesta."),
         prioridad: z.enum(PRIORIDADES).describe("Prioridad propuesta; solo puede subir respecto a la prioridad base."),
         justificacion: textoIA(400).describe("Razón de la exclusión o del cambio de prioridad."),
       }),
-    )
-    .max(200)
-    .describe("Solo los candidatos que se excluyen o cuya prioridad sube. Los demás se incluyen con su prioridad base."),
-  alertas: z
-    .array(
+      200,
+    ).describe("Solo los candidatos que se excluyen o cuya prioridad sube. Los demás se incluyen con su prioridad base."),
+  alertas: listaIA(
       z.object({
         titulo: textoIA(150),
         justificacion: textoIA(600),
-        proveedor: z.string().trim().max(120).optional().describe("Nombre del proveedor relacionado, si aplica."),
+        proveedor: textoOpcionalIA(120).describe("Nombre del proveedor relacionado, si aplica."),
       }),
-    )
-    .max(6)
-    .describe("Situaciones que requieren atención del gerente (por ejemplo, un proveedor impuntual)."),
+      6,
+    ).describe("Entre 0 y 4 situaciones que requieren atención del gerente (por ejemplo, un proveedor impuntual)."),
 });
 export type SalidaInventario = z.infer<typeof esquemaSalidaInventario>;
 
@@ -135,28 +141,25 @@ export const TIPOS_RECOMENDACION_COMERCIAL = ["PROMOCION", "LIQUIDACION", "REVIS
 
 export const esquemaSalidaComercial = z.object({
   resumen: textoIA(1500).describe("Resumen ejecutivo del análisis comercial, en 2 a 4 frases."),
-  hallazgos: z
-    .array(
+  hallazgos: listaIA(
       z.object({
         titulo: textoIA(150),
         detalle: textoIA(600),
         kpiRelacionado: z.enum(REFERENCIAS_DASHBOARD).describe("KPI (KPI-01 a KPI-08) o gráfico (G-01 a G-04) del dashboard que respalda el hallazgo."),
         valor: textoIA(80).describe("Valor citado, tal como lo devolvió la herramienta (ej. \"$9.669.500\" o \"25,5 %\")."),
       }),
-    )
-    .min(1)
-    .max(8),
-  recomendaciones: z
-    .array(
+      8,
+    ).describe("Entre 3 y 6 hallazgos."),
+  recomendaciones: listaIA(
       z.object({
         tipo: z.enum(TIPOS_RECOMENDACION_COMERCIAL),
         prioridad: z.enum(PRIORIDADES),
-        sku: z.string().trim().max(40).optional().describe("SKU del producto, si la recomendación es sobre un producto."),
-        sucursal: z.string().trim().max(60).optional().describe("Nombre de la sucursal, si aplica."),
+        sku: textoOpcionalIA(40).describe("SKU del producto, si la recomendación es sobre un producto."),
+        sucursal: textoOpcionalIA(60).describe("Nombre de la sucursal, si aplica."),
         titulo: textoIA(150),
         justificacion: textoIA(600),
       }),
-    )
-    .max(8),
+      8,
+    ).describe("Entre 2 y 6 acciones comerciales."),
 });
 export type SalidaComercial = z.infer<typeof esquemaSalidaComercial>;
