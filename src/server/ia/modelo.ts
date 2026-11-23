@@ -23,6 +23,8 @@ export type SolicitudModelo = {
   modoHerramientas?: "auto" | "ninguna";
   /** Respuesta JSON validable (agentes, Fase 7). */
   esquemaRespuesta?: unknown;
+  /** Tiempo limite de la llamada; por defecto 30 s (los agentes usan mas). */
+  tiempoLimiteMs?: number;
 };
 
 export type RespuestaModelo = {
@@ -42,6 +44,8 @@ export interface ModeloIA {
 const TIEMPO_LIMITE_MS = 30_000;
 /** Tras una falla del principal, el respaldo va primero durante este tiempo (docs/07-IAG seccion 8). */
 export const PAUSA_PRINCIPAL_MS = 60_000;
+/** Con la cuota diaria agotada, el principal se aparta como maximo este tiempo (luego se vuelve a probar). */
+export const PAUSA_MAXIMA_CUOTA_MS = 6 * 3_600_000;
 
 /** Tipo de falla del proveedor: decide si se reintenta el mismo modelo o se pasa al siguiente. */
 export type FallaModelo = "cuota" | "tiempo" | "sobrecarga" | "otra";
@@ -66,25 +70,33 @@ export function detalleCuota(e: unknown): string {
   return [limite && `limite ${limite}`, espera && `reintentar en ${espera}`].filter(Boolean).map((t) => `, ${t}`).join("");
 }
 
+/** Espera sugerida por el proveedor en un 429 (retryDelay), en milisegundos; null si no la indica. */
+export function esperaSugeridaMs(e: unknown): number | null {
+  const mensaje = e instanceof Error ? e.message : "";
+  const s = /"retryDelay":\s*"([\d.]+)s"/.exec(mensaje)?.[1] ?? /retry in ([\d.]+)s/i.exec(mensaje)?.[1];
+  return s ? Math.round(Number(s) * 1000) : null;
+}
+
 /** Errores que justifican otro intento: cuota, sobrecarga (503) o tiempo agotado. */
 export function reintentable(e: unknown): boolean {
   return clasificarFalla(e) !== "otra";
 }
 
 /**
- * docs/07-IAG seccion 8. El primer modelo de la lista tiene dos intentos solo ante
- * sobrecarga momentanea (503); con la cuota agotada (429) o un tiempo agotado (504)
- * se pasa de inmediato al siguiente, porque repetir solo alarga la espera. Un error
- * no reintentable (p. ej. clave invalida) corta de inmediato.
+ * docs/07-IAG seccion 8. Cada modelo de la lista tiene dos intentos ante sobrecarga
+ * momentanea (503), con una espera corta entre ambos; con la cuota agotada (429) o un
+ * tiempo agotado (504) se pasa de inmediato al siguiente, porque repetir solo alarga la
+ * espera. Un error no reintentable (p. ej. clave invalida o modelo inexistente) corta.
  */
 export async function intentarConRespaldo<T>(
   modelos: string[],
   intentar: (modelo: string) => Promise<T>,
   esperar: (ms: number) => Promise<void> = (ms) => new Promise((ok) => setTimeout(ok, ms)),
+  alFallar?: (modelo: string, falla: FallaModelo, error: unknown) => void,
 ): Promise<{ resultado: T; modelo: string }> {
   let ultimo: unknown = null;
   for (const [i, modelo] of modelos.entries()) {
-    const intentos = i === 0 ? 2 : 1;
+    const intentos = 2;
     const hayOtro = i < modelos.length - 1;
     for (let n = 1; n <= intentos; n++) {
       try {
@@ -93,9 +105,10 @@ export async function intentarConRespaldo<T>(
         ultimo = e;
         const falla = clasificarFalla(e);
         console.error(`[ia] ${modelo} (intento ${n}, ${falla}${detalleCuota(e)}):`, e instanceof Error ? e.message.slice(0, 160) : e);
+        alFallar?.(modelo, falla, e);
         if (falla === "otra") throw e;
         if (falla === "cuota" || (falla === "tiempo" && hayOtro)) break;
-        if (n < intentos) await esperar(2000);
+        if (n < intentos) await esperar(2000 + i * 1000);
       }
     }
   }
@@ -103,33 +116,49 @@ export async function intentarConRespaldo<T>(
 }
 
 /**
- * Orden de los modelos para cada llamada. Si el principal fallo y respondio el respaldo,
- * durante PAUSA_PRINCIPAL_MS el respaldo va primero: asi las rondas siguientes de la misma
- * pregunta (y las preguntas inmediatas) no vuelven a esperar al principal saturado.
+ * Orden de los modelos para cada llamada: el principal y luego los de respaldo, en el orden
+ * configurado. Si el principal fallo y respondio un respaldo, durante PAUSA_PRINCIPAL_MS los
+ * respaldos van primero: asi las rondas siguientes de la misma pregunta (y las preguntas
+ * inmediatas) no vuelven a esperar al principal saturado. Si el principal agoto su cuota
+ * diaria, la pausa dura lo que sugiere el proveedor (maximo PAUSA_MAXIMA_CUOTA_MS).
  */
 export class SelectorModelos {
   private pausaHasta = 0;
+  readonly respaldos: string[];
   constructor(
     readonly principal: string,
-    readonly respaldo: string | null,
+    respaldo: string | readonly string[] | null,
     private readonly reloj: () => number = Date.now,
-  ) {}
+  ) {
+    const lista = typeof respaldo === "string" ? respaldo.split(",") : respaldo ?? [];
+    this.respaldos = [...new Set(lista.map((m) => m.trim()).filter((m) => m && m !== principal))];
+  }
 
   orden(): string[] {
-    if (!this.respaldo || this.respaldo === this.principal) return [this.principal];
-    return this.reloj() < this.pausaHasta ? [this.respaldo, this.principal] : [this.principal, this.respaldo];
+    if (this.respaldos.length === 0) return [this.principal];
+    return this.reloj() < this.pausaHasta ? [...this.respaldos, this.principal] : [this.principal, ...this.respaldos];
   }
 
   /** Registra que modelo respondio para el orden usado. */
   registrar(orden: string[], modelo: string) {
-    if (orden[0] === this.principal && modelo !== this.principal) this.pausaHasta = this.reloj() + PAUSA_PRINCIPAL_MS;
+    if (orden[0] === this.principal && modelo !== this.principal) this.pausar(PAUSA_PRINCIPAL_MS);
+  }
+
+  /** Registra la falla de un modelo: si es la cuota del principal, lo aparta lo que indique el proveedor. */
+  registrarFalla(modelo: string, falla: FallaModelo, error: unknown) {
+    if (modelo !== this.principal || falla !== "cuota" || this.respaldos.length === 0) return;
+    this.pausar(Math.min(Math.max(esperaSugeridaMs(error) ?? PAUSA_PRINCIPAL_MS, PAUSA_PRINCIPAL_MS), PAUSA_MAXIMA_CUOTA_MS));
+  }
+
+  private pausar(ms: number) {
+    this.pausaHasta = Math.max(this.pausaHasta, this.reloj() + ms);
   }
 }
 
 export class ModeloGemini implements ModeloIA {
   private cliente: GoogleGenAI;
   private selector: SelectorModelos;
-  constructor(apiKey: string, readonly nombre: string, respaldo: string | null = null) {
+  constructor(apiKey: string, readonly nombre: string, respaldo: string | readonly string[] | null = null) {
     this.cliente = new GoogleGenAI({ apiKey });
     this.selector = new SelectorModelos(nombre, respaldo);
   }
@@ -138,7 +167,7 @@ export class ModeloGemini implements ModeloIA {
     const config = {
       systemInstruction: s.sistema,
       thinkingConfig: { thinkingLevel: s.nivel === "bajo" ? ThinkingLevel.LOW : ThinkingLevel.MEDIUM },
-      httpOptions: { timeout: TIEMPO_LIMITE_MS },
+      httpOptions: { timeout: s.tiempoLimiteMs ?? TIEMPO_LIMITE_MS },
       ...(s.herramientas.length
         ? {
             tools: [{ functionDeclarations: s.herramientas }],
@@ -154,7 +183,8 @@ export class ModeloGemini implements ModeloIA {
     const modelos = this.selector.orden();
     try {
       const { resultado: r, modelo } = await intentarConRespaldo(modelos, (model) =>
-        this.cliente.models.generateContent({ model, contents: s.contenidos, config }));
+        this.cliente.models.generateContent({ model, contents: s.contenidos, config }), undefined,
+      (m, falla, e) => this.selector.registrarFalla(m, falla, e));
       this.selector.registrar(modelos, modelo);
       const contenido: Content = r.candidates?.[0]?.content ?? { role: "model", parts: [] };
       // El texto se arma con las partes de texto (sin el razonamiento); asi se evita el aviso
@@ -170,7 +200,10 @@ export class ModeloGemini implements ModeloIA {
 
 let modeloPorDefecto: ModeloIA | null = null;
 
-/** Modelo configurado en GEMINI_API_KEY, GEMINI_MODEL y, opcional, GEMINI_MODEL_RESPALDO. Sin clave responde 503 (PRU-C11). */
+/**
+ * Modelo configurado en GEMINI_API_KEY, GEMINI_MODEL y, opcional, GEMINI_MODEL_RESPALDO
+ * (uno o varios modelos separados por comas, en orden de preferencia). Sin clave responde 503 (PRU-C11).
+ */
 export function obtenerModelo(): ModeloIA {
   if (modeloPorDefecto) return modeloPorDefecto;
   const clave = process.env.GEMINI_API_KEY;

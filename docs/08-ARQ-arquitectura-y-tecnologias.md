@@ -87,12 +87,14 @@ tf-fsi-ceiba-erp/
 │       ├── auth/                  Sesión JWT, contraseñas, permisos por rol y sucursal
 │       ├── validacion/            Esquemas Zod por recurso
 │       ├── http/                  Fábrica de Route Handlers CRUD (rutas-crud.ts)
-│       ├── servicios/             catalogos, usuarios, inventario, ventas, compras, kpi, reportes
+│       ├── servicios/             catalogos, usuarios, inventario, ventas, compras, kpi, reportes,
+│       │                          chat, agentes, recomendaciones
 │       ├── ia/
-│       │   ├── gemini.ts          Cliente y bucle de llamadas a funciones
-│       │   ├── herramientas/      Una herramienta por archivo (07-IAG §3)
-│       │   ├── chatbot.ts
-│       │   └── agentes/           inventario.ts, comercial.ts, informe-ejecutivo.ts
+│       │   ├── modelo.ts          Interfaz ModeloIA y cliente Gemini con modelo de respaldo
+│       │   ├── orquestador.ts     Ciclo de llamadas a funciones
+│       │   ├── herramientas.ts    Herramientas de solo lectura (07-IAG §3)
+│       │   ├── herramientas-agentes.ts  Herramientas propias de los agentes
+│       │   └── instrucciones.ts   Instrucciones del chatbot y de los agentes
 │       └── errores.ts             Errores de dominio → códigos HTTP
 ├── tests/
 │   ├── unit/                      Vitest sin BD
@@ -176,6 +178,7 @@ Versiones estables vigentes al 21/11/2026. Se fijan en `package.json` durante la
 - **Zona horaria de la sesión de BD:** Prisma envía los `Date` sin zona horaria, así que la sesión de PostgreSQL debe estar en UTC (el valor por defecto de Supabase). `npm run db:verificar` lo comprueba (ver DEF-04 en `10-PRU`).
 - **Gráficos:** Recharts, con un eje por gráfico, leyenda cuando hay más de una serie, colores de estado reservados para el inventario y tabla de datos plegable bajo cada gráfico. Los colores se definen como variables CSS (`--chart-*`, `--estado-*`) en `globals.css`.
 - **Capa de IA (Fase 6):** `src/server/ia/` separa el acceso al modelo (interfaz `ModeloIA`, implementada con Gemini e intercambiable por un modelo simulado en las pruebas), el registro de herramientas (esquemas Zod convertidos a JSON Schema, roles permitidos y ejecución que nunca lanza: los errores vuelven al modelo como datos), el ciclo de llamadas a funciones y las instrucciones de sistema. El chatbot y los agentes de la Fase 7 comparten estas piezas.
+- **Agentes (Fase 7):** las reglas que deciden (fórmula de reposición, aplicación de las decisiones del modelo y regla de coherencia) son funciones puras en `src/lib/agentes.ts`, probadas sin base de datos; el servicio `src/server/servicios/agentes.ts` orquesta el modelo, registra cada ejecución en `ejecucion_agente` y crea las órdenes con el mismo `crearOrdenBorrador` del módulo de compras, de modo que se aplican las mismas validaciones y la misma auditoría.
 - **Alcance por sucursal en el servidor:** un registro de otra sucursal responde 404 para Bodega y Cajero, sin importar el `sucursalId` que envíe el cliente (RN-05).
 - **Módulo de referencia:** `src/app/(app)/catalogos/productos/` define el patrón de las pantallas (listado con búsqueda, filtros y paginación; formulario en diálogo con validación por campo; confirmación antes de desactivar).
 

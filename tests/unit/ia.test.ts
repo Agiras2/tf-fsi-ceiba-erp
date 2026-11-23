@@ -223,6 +223,35 @@ describe("Reintentos y modelo de respaldo (docs/07-IAG seccion 8)", () => {
     expect(new SelectorModelos("unico", null).orden()).toEqual(["unico"]);
     expect(new SelectorModelos("igual", "igual").orden()).toEqual(["igual"]);
   });
+
+  it("admite varios respaldos y aparta al principal sin cuota diaria el tiempo que sugiere el proveedor", async () => {
+    const { SelectorModelos, intentarConRespaldo, esperaSugeridaMs, PAUSA_MAXIMA_CUOTA_MS } = await import("@/server/ia/modelo");
+    let ahora = 0;
+    const sel = new SelectorModelos("p", "r1, r2,,p", () => ahora);
+    expect(sel.orden()).toEqual(["p", "r1", "r2"]);
+    const diaria = new Error('{"error":{"code":429,"details":[{"retryDelay":"7200s"}]}}');
+    expect(esperaSugeridaMs(diaria)).toBe(7_200_000);
+    // El principal sin cuota y el primer respaldo saturado: responde el segundo respaldo.
+    const vistos: string[] = [];
+    const orden = sel.orden();
+    const r = await intentarConRespaldo(orden, async (m) => {
+      vistos.push(m);
+      if (m === "p") throw diaria;
+      if (m === "r1") throw new Error("high demand");
+      return "ok";
+    }, async () => {}, (m, f, e) => sel.registrarFalla(m, f, e));
+    sel.registrar(orden, r.modelo);
+    expect(vistos).toEqual(["p", "r1", "r1", "r2"]);
+    expect(r.modelo).toBe("r2");
+    ahora += 3_600_000; // una hora despues el principal sigue apartado
+    expect(sel.orden()).toEqual(["r1", "r2", "p"]);
+    ahora += 3_600_000;
+    expect(sel.orden()[0]).toBe("p");
+    // La pausa nunca supera el maximo aunque el proveedor sugiera mas.
+    sel.registrarFalla("p", "cuota", new Error('{"retryDelay":"90000s"}'));
+    ahora += PAUSA_MAXIMA_CUOTA_MS;
+    expect(sel.orden()[0]).toBe("p");
+  });
 });
 
 describe("Fallas de conexion con la base de datos (DEF-05)", () => {

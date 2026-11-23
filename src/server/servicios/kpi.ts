@@ -14,6 +14,7 @@ import {
   diasDelPeriodo, esquemaPeriodo, periodoAnterior, periodoPorDefecto, type CriterioTop, type Periodo,
 } from "@/lib/esquemas/kpi";
 import { IDS_KPI, interpretar, valorKpi, type IdKpi, type ValorKpi } from "@/lib/kpi";
+import type { FilaReposicion } from "@/lib/agentes";
 import { filtroId, type Contexto } from "./comun";
 
 export type FiltrosKpi = Periodo & { sucursalId: number | null; categoriaId: number | null };
@@ -562,4 +563,50 @@ export async function clientesConMasCompras(f: FiltrosKpi, limite = 10) {
     GROUP BY cl.id, cl.nombre
     ORDER BY compras DESC, total DESC, cl.nombre
     LIMIT ${Math.min(Math.max(limite, 1), 20)}`;
+}
+
+/**
+ * Datos para el calculo de reposicion del Agente 1 (docs/07-IAG 5.2): por producto activo
+ * en cada sucursal activa, existencias, umbrales, venta diaria de los ultimos 28 dias
+ * completos y unidades en transito (ordenes BORRADOR o APROBADA). La formula se aplica
+ * en src/lib/agentes.ts.
+ */
+export async function datosReposicion(sucursalId: number | null): Promise<FilaReposicion[]> {
+  const hoy = hoyBogota();
+  const ini = ts(inicioDiaBogota(sumarDias(hoy, -VENTANA_DEMANDA_DIAS)));
+  const fin = ts(inicioDiaBogota(hoy));
+  const filas = await prisma.$queryRaw<{
+    producto_id: number; sku: string; producto: string; categoria: string; sucursal_id: number; sucursal: string;
+    proveedor_id: number; proveedor: string; tiempo: number; costo: number; stock: number; minimo: number; maximo: number;
+    diaria: number; transito: number;
+  }[]>`
+    WITH demanda AS (
+      SELECT v.sucursal_id, dv.producto_id, SUM(dv.cantidad)::numeric / ${VENTANA_DEMANDA_DIAS} AS diaria
+      FROM ${T("detalle_venta")} dv JOIN ${T("venta")} v ON v.id = dv.venta_id
+      WHERE v.estado = 'REGISTRADA' AND v.fecha >= ${ini} AND v.fecha < ${fin}
+      GROUP BY v.sucursal_id, dv.producto_id
+    ), transito AS (
+      SELECT oc.sucursal_id, dd.producto_id, SUM(dd.cantidad)::int AS unidades
+      FROM ${T("orden_compra")} oc JOIN ${T("detalle_orden_compra")} dd ON dd.orden_compra_id = oc.id
+      WHERE oc.estado IN ('BORRADOR', 'APROBADA')
+      GROUP BY oc.sucursal_id, dd.producto_id
+    )
+    SELECT p.id AS producto_id, p.sku, p.nombre AS producto, c.nombre AS categoria, s.id AS sucursal_id, s.nombre AS sucursal,
+           pr.id AS proveedor_id, pr.nombre AS proveedor, pr.tiempo_entrega_dias AS tiempo, p.costo::float8 AS costo,
+           i.stock, i.stock_minimo AS minimo, i.stock_maximo AS maximo,
+           COALESCE(d.diaria, 0)::float8 AS diaria, COALESCE(t.unidades, 0)::int AS transito
+    FROM ${T("inventario")} i
+    JOIN ${T("producto")} p ON p.id = i.producto_id
+    JOIN ${T("categoria")} c ON c.id = p.categoria_id
+    JOIN ${T("proveedor")} pr ON pr.id = p.proveedor_id
+    JOIN ${T("sucursal")} s ON s.id = i.sucursal_id
+    LEFT JOIN demanda d ON d.sucursal_id = i.sucursal_id AND d.producto_id = i.producto_id
+    LEFT JOIN transito t ON t.sucursal_id = i.sucursal_id AND t.producto_id = i.producto_id
+    WHERE p.activo AND s.activa AND pr.activo AND ${condSucursal(Prisma.sql`i.sucursal_id`, sucursalId)}
+    ORDER BY p.nombre, s.nombre`;
+  return filas.map((r) => ({
+    productoId: r.producto_id, sku: r.sku, producto: r.producto, categoria: r.categoria, sucursalId: r.sucursal_id,
+    sucursal: r.sucursal, proveedorId: r.proveedor_id, proveedor: r.proveedor, tiempoEntregaDias: r.tiempo, costo: r.costo,
+    stock: r.stock, stockMinimo: r.minimo, stockMaximo: r.maximo, ventaDiaria: r.diaria, enTransito: r.transito,
+  }));
 }
