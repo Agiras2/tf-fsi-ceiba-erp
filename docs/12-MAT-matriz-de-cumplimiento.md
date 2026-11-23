@@ -64,7 +64,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | ID | Atributo | Cómo se cumple | Requisitos | Estado |
 |---|---|---|---|---|
 | G10-01 | Usabilidad | Navegación consistente por rol, componentes shadcn/ui | RNF-01 | ⏳ |
-| G10-02 | Seguridad | Validación de entradas, autorización en servidor, secretos fuera del repo, usuario de BD de mínimo privilegio | RNF-02, `09-SEG` | 🟡 |
+| G10-02 | Seguridad | Validación de entradas, autorización en servidor, secretos fuera del repo, usuario de BD de mínimo privilegio | RNF-02, `09-SEG` | ✅ |
 | G10-03 | Integridad | Transacciones, reglas de negocio y estados controlados | RNF-03 | ✅ |
 | G10-04 | Mantenibilidad | Código modular por capas (`08-ARQ`) | RNF-04, `08-ARQ` | 🟡 |
 | G10-05 | Trazabilidad | Auditoría de operaciones y registro de ejecuciones de agentes | RNF-05, RF-04 | 🟡 |
@@ -76,7 +76,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 
 | ID | Entregable | Componentes | Fase | Estado |
 |---|---|---|---|---|
-| G11-01 | Aplicación funcional | Módulos, datos, flujo, chatbot, agentes, dashboard, errores | 2–9 | ⏳ |
+| G11-01 | Aplicación funcional | Módulos, datos, flujo, chatbot, agentes, dashboard, errores | 2–9 | ✅ |
 | G11-02 | Repositorio GitHub | Código, estructura, README, dependencias, script de BD, datos ficticios, `.env.example`, historial de prompts | 11 | ⏳ |
 | G11-03 | Mínimo ocho capturas con título y descripción | OBL-1 a OBL-8 más capturas adicionales | 3–10 | ⏳ |
 | G11-04 | Informe técnico en PDF (8–15 páginas, 18 puntos) | Ver sección 7 | 12 | ⏳ |

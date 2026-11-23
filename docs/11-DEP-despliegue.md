@@ -56,6 +56,8 @@ La aplicación y la base de datos están en la misma región para que cada consu
 4. Una pregunta al chatbot y la revisión de la etiqueta de IA.
 5. Los encabezados de seguridad (`09-SEG` §7) en la respuesta de cualquier página.
 
+**Resultado del primer despliegue (23/11/2026).** Servicio en línea en Railway desde la rama de la fase; `/api/health` con base de datos `ok`; inicio de sesión como gerente, cajero y bodega, cada uno con solo su menú; el chatbot respondió con el modelo de respaldo, y el script de seguridad dio 18 de 18 contra la URL pública (incluida la cookie de sesión segura sobre HTTPS). Después de la *release* v0.9.0 el servicio pasó a desplegarse desde `main`.
+
 ## 6. Mantenimiento
 
 - **Pausa de Supabase:** el plan gratuito pausa un proyecto tras varios días sin actividad. El flujo `.github/workflows/mantener-activo.yml` consulta `/api/health` todos los días a las 08:17 (hora de Colombia), con tres intentos. Esa ruta ejecuta `SELECT 1` en la base de datos, de modo que la mantiene activa y, si algo falla, el flujo queda en rojo en la pestaña *Actions* del repositorio. La URL se guarda como variable del repositorio `URL_APP` (no es un secreto). También puede ejecutarse a mano con *Run workflow*.
