@@ -163,7 +163,13 @@ if ($h1) {
   Write-Host ("      Candidatos: {0} (incluidos {1}, excluidos {2}, ajustados por la IA {3}); ignorados: {4}" -f @($r1.decisiones).Count, $incl.Count, $excl.Count, $ajust.Count, (@($r1.ignorados) -join ", "))
   foreach ($d in $ajust) { Write-Host ("        {0} {1}: {2} -> {3} {4}" -f $d.sku, $d.sucursal, $d.prioridadBase, $d.prioridad, (Texto $d.justificacion 150)) }
   Write-Host ("      Ordenes BORRADOR creadas: {0}; alertas: {1}" -f @($a1.ordenes).Count, @($a1.recomendaciones).Count)
-  Cumple "C09" "Agente 1 completado y usa la propuesta del sistema" ($a1.estado -eq "COMPLETADA" -and (@($a1.herramientasUsadas) | Where-Object { $_.herramienta -eq "calcularPropuestaReposicion" }))
+  if (@($r1.decisiones).Count -eq 0) {
+    # Sin candidatos el sistema completa la ejecucion sin llamar al modelo (docs/07-IAG 5.4).
+    Write-Host "      Sin candidatos de reposicion: no se llama al modelo. Para PRU-C09 con IA, venda primero un producto hasta dejarlo bajo el minimo." -ForegroundColor Yellow
+    Cumple "C09" "Agente 1 completado sin candidatos y sin llamar al modelo" ($a1.estado -eq "COMPLETADA" -and -not $a1.modelo)
+  } else {
+    Cumple "C09" "Agente 1 completado y usa la propuesta del sistema" ($a1.estado -eq "COMPLETADA" -and [bool](@($a1.herramientasUsadas) | Where-Object { $_.herramienta -eq "calcularPropuestaReposicion" }))
+  }
   $okOrdenes = $true
   $okCantidades = $true
   $okExcluidos = $true
