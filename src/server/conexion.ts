@@ -67,7 +67,20 @@ export function prepararConexion(urlTexto: string): ConfigConexion {
  */
 export function crearPrismaClient(urlTexto: string): { prisma: PrismaClient; conf: ConfigConexion } {
   const conf = prepararConexion(urlTexto);
-  const pool = new Pool({ connectionString: conf.connectionString, ssl: conf.ssl, max: 5 });
+  const pool = new Pool({
+    connectionString: conf.connectionString,
+    ssl: conf.ssl,
+    max: 5,
+    // DEF-05: abrir una conexion TLS nueva hacia Supabase puede tardar varios segundos
+    // (p. ej. tras esperar al modelo de IA). Se fija un limite claro para conectar y se
+    // mantienen las conexiones vivas un poco mas que el valor por defecto (10 s).
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+    keepAlive: true,
+  });
   const adapter = new PrismaPg(pool, { schema: conf.schema });
-  return { prisma: new PrismaClient({ adapter }), conf };
+  // Por defecto Prisma espera solo 2 s para iniciar una transaccion (incluidas las internas
+  // de las escrituras anidadas); con una conexion nueva y lejana eso no alcanza.
+  const prisma = new PrismaClient({ adapter, transactionOptions: { maxWait: 10_000, timeout: 15_000 } });
+  return { prisma, conf };
 }

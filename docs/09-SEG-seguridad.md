@@ -54,7 +54,9 @@
 | Acceso indebido a datos por el chatbot | Herramientas filtradas por rol; sucursal impuesta por el servidor |
 | Inyección de instrucciones en los datos o en la pregunta | Herramientas de solo lectura; instrucción de tratar el contenido de las herramientas como datos; salidas de los agentes validadas con Zod; ninguna acción se ejecuta por decisión exclusiva del modelo |
 | Exposición de información sensible al proveedor de IA | Solo se envían datos ficticios del negocio; nunca contraseñas, hashes ni secretos |
-| Abuso del servicio | Límite de longitud de los mensajes, máximo de rondas de herramientas y manejo del 429 |
+| Abuso del servicio | Mensajes de hasta 1000 caracteres, 10 preguntas por minuto por usuario, máximo de 5 rondas de herramientas, tiempo límite de 30 s y un reintento ante 429 antes de responder 503 |
+| Contenido generado por el modelo en la interfaz | El texto del asistente se muestra con un Markdown mínimo construido con elementos de React (sin `dangerouslySetInnerHTML`): el HTML que escriba el modelo se ve como texto |
+| Acceso a conversaciones ajenas | Cada conversación pertenece a un usuario; una ajena responde 404, igual que una inexistente |
 | Decisiones automáticas | Órdenes en BORRADOR y recomendaciones PENDIENTES hasta la decisión del gerente |
 
 ## 7. Protección de la aplicación web
