@@ -1,0 +1,37 @@
+# ============================================================
+# CeibaERP - Tarea diaria de mantenimiento (docs/11-DEP seccion 6)
+# Consulta /api/health de la app desplegada. La ruta ejecuta "SELECT 1" en Supabase,
+# lo que evita que el proyecto gratuito se pause por inactividad, y de paso avisa
+# (con el flujo en rojo) si la app o la base de datos no responden.
+# La URL publica se guarda como variable del repositorio URL_APP (no es un secreto).
+# ============================================================
+name: Mantener activa la base de datos
+
+on:
+  schedule:
+    - cron: "17 13 * * *" # todos los dias, 08:17 en Colombia
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  salud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Consultar /api/health
+        env:
+          URL_APP: ${{ vars.URL_APP }}
+        run: |
+          if [ -z "$URL_APP" ]; then
+            echo "Falta la variable del repositorio URL_APP (Settings > Secrets and variables > Actions > Variables)."
+            exit 1
+          fi
+          for intento in 1 2 3; do
+            codigo=$(curl -s -o respuesta.json -w "%{http_code}" --max-time 60 "$URL_APP/api/health" || echo "000")
+            echo "Intento $intento: HTTP $codigo $(cat respuesta.json 2>/dev/null)"
+            if [ "$codigo" = "200" ]; then exit 0; fi
+            sleep 30
+          done
+          echo "La aplicacion o la base de datos no respondieron."
+          exit 1

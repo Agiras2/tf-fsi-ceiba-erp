@@ -44,7 +44,7 @@ El código se usa también para referenciar elementos internos de cada documento
 | 08 | ARQ | [08-ARQ-arquitectura-y-tecnologias.md](08-ARQ-arquitectura-y-tecnologias.md) | Capas, estructura de carpetas, tecnologías y su justificación | ✅ |
 | 09 | SEG | [09-SEG-seguridad.md](09-SEG-seguridad.md) | Autenticación, autorización, credenciales y privilegios en la base de datos | ✅ |
 | 10 | PRU | [10-PRU-plan-de-pruebas.md](10-PRU-plan-de-pruebas.md) | Pruebas automatizadas, de seguridad, del chatbot y con TestSprite | ✅ |
-| 11 | DEP | `11-DEP-despliegue.md` | Supabase, Railway, variables de entorno y mantenimiento | ⏳ Fase 9 |
+| 11 | DEP | [11-DEP-despliegue.md](11-DEP-despliegue.md) | Supabase, Railway, variables de entorno, verificación y mantenimiento | ✅ |
 | 12 | MAT | [12-MAT-matriz-de-cumplimiento.md](12-MAT-matriz-de-cumplimiento.md) | Cada exigencia de la guía → cómo se cumple → fase → evidencia | 🟡 Se actualiza en cada fase |
 | 13 | PRM | `13-PRM-historial-de-prompts.md` | Prompts usados con GitHub Copilot y Claude durante el desarrollo | ⏳ Fase 11 |
 

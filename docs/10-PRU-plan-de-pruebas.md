@@ -92,7 +92,7 @@ try {
 
 `$env:DEMO_PWD` se define en la sesión de PowerShell sin imprimirse.
 
-**Implementación (Fase 8).** `scripts/pruebas-seguridad-fase08.ps1` ejecuta PRU-S01 a PRU-S12 contra la app local o desplegada (`-Base`). Pide la clave oculta, crea una orden de prueba en borrador y la cancela al final, sin cambiar el stock. Para PRU-S09 usa un correo inexistente, así que el bloqueo de 15 minutos nunca afecta una cuenta real. PRU-S11 altera un carácter de la firma de la cookie de sesión y comprueba que la original sigue funcionando. PRU-S12 revisa que `/api/health` solo devuelva estado, base de datos y fecha. Resultado contra la app local (23/11/2026): 18 de 18 verificaciones (PRU-S01 a S12 con sus comprobaciones adicionales). En la Fase 9 se repite contra la app desplegada.
+**Implementación (Fase 8).** `scripts/pruebas-seguridad-fase08.ps1` ejecuta PRU-S01 a PRU-S12 contra la app local o desplegada (`-Base`). Pide la clave oculta, crea una orden de prueba en borrador y la cancela al final, sin cambiar el stock. Para PRU-S09 usa un correo inexistente, así que el bloqueo de 15 minutos nunca afecta una cuenta real. PRU-S11 altera un carácter de la firma de la cookie de sesión y comprueba que la original sigue funcionando. PRU-S12 revisa que `/api/health` solo devuelva estado, base de datos y fecha. Resultado contra la app local (23/11/2026): 18 de 18 verificaciones (PRU-S01 a S12 con sus comprobaciones adicionales). Contra la app desplegada en Railway (23/11/2026): 18 de 18.
 
 ## 5. Chatbot y agentes
 

@@ -11,6 +11,8 @@
 param([string]$Base = "http://localhost:3000")
 
 $ErrorActionPreference = "Stop"
+# PowerShell 5.1 puede no ofrecer TLS 1.2 por defecto; la app desplegada lo exige.
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 $sec = Read-Host "Clave de los usuarios demo" -AsSecureString
 $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
 $clave = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
