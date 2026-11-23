@@ -42,7 +42,7 @@ export function prepararConexion(urlTexto: string): ConfigConexion {
     return { connectionString: url.toString(), schema, ssl: false, modoSsl: "sin-cifrado" };
   }
 
-  const rutaCa = path.resolve(process.cwd(), process.env.DB_SSL_CA_PATH ?? "certs/supabase-ca.crt");
+  const rutaCa = path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.DB_SSL_CA_PATH ?? "certs/supabase-ca.crt");
   if (fs.existsSync(rutaCa)) {
     return {
       connectionString: url.toString(),
