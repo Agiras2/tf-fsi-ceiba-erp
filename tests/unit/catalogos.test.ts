@@ -6,6 +6,7 @@ import {
 import { esquemaListado } from "@/lib/esquemas/comunes";
 import { cambios } from "@/server/servicios/comun";
 import { accionesPermitidas, puedeLeer } from "@/lib/permisos";
+import { formatoMargen } from "@/lib/formato";
 
 const productoValido = {
   sku: "aba-099", nombre: "Arroz integral 1 kg", categoriaId: "1", proveedorId: "2", unidad: "unidad", costo: "4200", precio: "5600",
@@ -91,5 +92,16 @@ describe("Permisos de catalogos (DEF-01)", () => {
 
   it("el cajero crea clientes pero no los edita ni elimina", () => {
     expect(accionesPermitidas("clientes", "CAJERO")).toEqual({ crear: true, editar: false, eliminar: false });
+  });
+});
+
+describe("Margen de productos (DEF-08)", () => {
+  it("usa coma decimal y un decimal, como el resto de la app", () => {
+    expect(formatoMargen(10000, 7840)).toBe("21,6 %");
+    expect(formatoMargen(2500, 2000)).toBe("20,0 %");
+  });
+
+  it("no divide entre cero si el precio es 0", () => {
+    expect(formatoMargen(0, 0)).toBe("—");
   });
 });
