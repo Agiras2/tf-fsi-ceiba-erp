@@ -35,7 +35,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 | G6-06 | Agentes inteligentes | Dos tareas diferenciadas e integradas | Informe ejecutivo que coordina ambos agentes | 7 | RF-39 | ✅ |
 | G6-07 | Dashboard | Seis KPI calculados a partir de datos | `06-KPI` | 5 | RF-24 | 🟡 |
 | G6-08 | Reportes | Consultar o exportar un reporte | Exportación CSV | 5 | RF-30 | 🟡 |
-| G6-09 | Validación y pruebas | Comprobar funcionalidades y manejar errores | `10-PRU` | 8, 10 | RNF-06, `10-PRU` | ⏳ |
+| G6-09 | Validación y pruebas | Comprobar funcionalidades y manejar errores | `10-PRU` | 8, 10 | RNF-06, `10-PRU` | ✅ |
 
 ## 3. Chatbot y agentes (guía, sección 7)
 
@@ -63,7 +63,7 @@ La columna **Requisitos** remite a `04-REQ` y a los demás documentos de diseño
 
 | ID | Atributo | Cómo se cumple | Requisitos | Estado |
 |---|---|---|---|---|
-| G10-01 | Usabilidad | Navegación consistente por rol, componentes shadcn/ui | RNF-01 | ⏳ |
+| G10-01 | Usabilidad | Navegación consistente por rol, componentes shadcn/ui | RNF-01 | ✅ |
 | G10-02 | Seguridad | Validación de entradas, autorización en servidor, secretos fuera del repo, usuario de BD de mínimo privilegio | RNF-02, `09-SEG` | ✅ |
 | G10-03 | Integridad | Transacciones, reglas de negocio y estados controlados | RNF-03 | ✅ |
 | G10-04 | Mantenibilidad | Código modular por capas (`08-ARQ`) | RNF-04, `08-ARQ` | 🟡 |
