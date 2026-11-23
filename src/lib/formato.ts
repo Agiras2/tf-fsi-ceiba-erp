@@ -20,6 +20,10 @@ export const formatoDia = (v: string | null | undefined) => (v ? dia.format(new 
 const pct = new Intl.NumberFormat("es-CO", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 export const formatoPct = (v: number | null | undefined) => (v == null ? "—" : `${pct.format(v)} %`);
 
+/** Margen bruto de un producto sobre el precio de venta: 21,6 % (DEF-08). */
+export const formatoMargen = (precio: number, costo: number) =>
+  precio > 0 ? formatoPct(((precio - costo) / precio) * 100) : "—";
+
 /** Pesos abreviados para ejes de graficos: $ 3,6 M. */
 const copCorto = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", notation: "compact", maximumFractionDigits: 1 });
 export const formatoCOPCorto = (v: number | null | undefined) => (v == null ? "—" : copCorto.format(v));
