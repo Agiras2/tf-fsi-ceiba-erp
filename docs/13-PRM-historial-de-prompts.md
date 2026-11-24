@@ -21,7 +21,7 @@ Registro cronológico de cada prompt usado con herramientas de IA durante el des
 
 | Herramienta | Entradas | Uso principal |
 |---|---|---|
-| Claude | 18 | Documentación (fases 0 y 1), capa de datos y *seed*, autenticación, API, procesos de negocio, dashboard, chatbot, agentes, pruebas, despliegue, especificación para TestSprite y corrección de defectos (DEF-01, DEF-03, DEF-05 a DEF-08) |
+| Claude | 19 | Documentación (fases 0 y 1), capa de datos y *seed*, autenticación, API, procesos de negocio, dashboard, chatbot, agentes, pruebas, despliegue, especificación para TestSprite y corrección de defectos (DEF-01, DEF-03, DEF-05 a DEF-08), README, capturas e informe final |
 | Copilot | 6 | Pantallas de catálogos, usuarios, consulta de ventas e historial de agentes, y la corrección del DEF-02 |
 | TestSprite | 1 | Exploración de la app desplegada, plan de 15 casos y ejecución end-to-end |
 
@@ -38,6 +38,7 @@ Registro cronológico de cada prompt usado con herramientas de IA durante el des
 | 8 — Pruebas | 22 |
 | 9 — Despliegue | 23 |
 | 10 — TestSprite | 24, 25 |
+| 11 y 12 — Cierre del repositorio e informe | 26 |
 
 ## Plantilla
 
@@ -670,3 +671,26 @@ En project.md elimina la regla 6 (no aplicar el plan ni iniciar ejecuciones hast
 ```text
 Envía a TestSprite con ts_commit el project.md que ya corregiste y también las notas del proyecto. Revisa además si alguna otra instrucción guardada (entorno default, instrucciones adicionales de ejecución, notas o casos de prueba) todavía dice que no se ejecute sin revisión o confirmación, o que no se envíen formularios, y elimínala. No ejecutes ni explores nada. Dime exactamente qué archivos o campos cambiaste.
 ```
+
+---
+
+## 26. Claude - 23/11/2026 - Fases 11 y 12: cierre del repositorio e informe tecnico
+
+- **Fase:** 11 y 12
+- **Rama:** feature/fase-11-cierre
+- **Resultado:** Historial de prompts revisado y completado como `docs/13-PRM` (prompts sin cambios, formato normalizado, mensajes de seguimiento a TestSprite). Búsqueda de secretos en todo el historial de Git (solo conteos y marcadores; ningún secreto) y verificación del correo noreply en los commits. README final, `docs/capturas/` con 45 capturas comprimidas, cada una con título y descripción (OBL-1 a OBL-8 y adicionales) y el diagrama entidad-relación generado desde `prisma/schema.prisma`; `12-MAT` y `00-IDX` al día. Informe técnico en Word y PDF con formato APA: 18 puntos de la guía en 15 páginas de contenido, 9 figuras, 7 tablas, referencias y anexos con 37 capturas adicionales y las cuentas de demostración.
+- **Revision y ajustes:** Se revisaron las 94 capturas una por una antes de publicarlas: ninguna muestra contraseñas, tokens ni claves; se difuminó la dirección del proyecto de Supabase en la verificación SQL y se dejaron fuera las de configuración de infraestructura. La captura de gráficos de la Fase 5 tenía colores de una versión anterior y se reemplazó por una nueva de la app desplegada, tomada después de volver a sembrar la demo; el análisis de KPI del informe usa las cifras de esa captura. La contraseña de demostración no está en el repositorio ni en este historial: se escribe a mano en el Anexo B del informe, que se entrega aparte.
+
+### Prompt
+
+```text
+Proyecto CeibaERP (Next.js 16, Prisma 7, Supabase, Gemini), repositorio Agiras2/tf-fsi-ceiba-erp con Gitflow, desplegado en Railway. Fases 11 y 12: cierre del repositorio e informe final del trabajo de Fundamentos de Sistemas de Información (UdeA, 2026-2). Necesito:
+1. Revisar mi historial de prompts (lo adjunto), completar lo que falte sin cambiar el texto de los prompts y dejarlo como docs/13-PRM-historial-de-prompts.md con resumen por herramienta y por fase.
+2. Buscar secretos en todo el historial de Git sin imprimir ningún valor (solo conteos y si cada coincidencia es un marcador) y verificar que los commits usen mi correo noreply de GitHub.
+3. Un README final con descripción, módulos, tecnologías, instalación, variables de entorno (solo nombres), base de datos, ejecución, usuarios de demostración sin contraseña, recorrido de prueba, pruebas y estructura.
+4. Revisar mis capturas (las adjunto), descartar las que muestren secretos o datos de infraestructura, comprimir las demás y publicarlas en docs/capturas con título y descripción de lo que demuestra cada una, empezando por las ocho obligatorias de la guía.
+5. Actualizar docs/12-MAT y docs/00-IDX.
+6. El informe técnico en Word y PDF con el formato APA de mis informes de laboratorio (adjunto uno de ejemplo y la guía): los 18 puntos de la guía en 8 a 15 páginas, con las capturas obligatorias en el cuerpo, un diagrama entidad-relación, tablas de requisitos, tecnologías, KPI, pruebas y riesgos, referencias y anexos con las capturas adicionales y las cuentas de demostración. Integrantes: Andrés Giraldo Arismendy y Santiago Rendón Rivera.
+Restricciones: no leas ni modifiques archivos .env ni .env.local; no me pidas ni escribas secretos; no imprimas valores de variables; la contraseña de demostración no va en el repositorio, en el historial ni en el informe que generes (deja un espacio marcado para escribirla yo). Entrega los cambios del repositorio como archivos con rutas relativas a la raíz.
+```
+
