@@ -131,6 +131,33 @@ Cómo se ejecutan las pruebas de los agentes (Fase 7):
 4. Reproducir a mano los dudosos.
 5. Corregir solo los defectos reales y volver a ejecutar únicamente las pruebas fallidas.
 
+**Ejecución (23/11/2026, portal web de TestSprite, plan gratuito).** La especificación cargada está en [`testsprite/prd-ceiba-erp.md`](testsprite/prd-ceiba-erp.md) (sin contraseñas: las cuentas se escribieron solo en el portal). El agente de TestSprite recorrió la app desplegada y propuso un plan; la revisión antes de ejecutar corrigió la especificación (los catálogos son de solo lectura para el gerente y la bodega, y las órdenes las crea la bodega), cambió el inicio de sesión inválido a un correo inexistente para no activar el bloqueo de 5 intentos y dejó fuera los agentes de IA, la administración y las descargas. El plan aprobado tiene 15 casos ([`testsprite/plan-pruebas-ceibaerp.md`](testsprite/plan-pruebas-ceibaerp.md)). Como el plan gratuito admite un solo entorno, los casos se ejecutaron por rondas cambiando la cuenta del entorno: bodega, gerente y cajero de Ceiba Centro.
+
+| Caso | Cuenta | Qué verifica | Resultado |
+|---|---|---|---|
+| AUTH-01 | Gerente | Inicio de sesión, nombre y rol, menú exacto del gerente, sesión tras recargar | ✅ |
+| AUTH-02 | (sin sesión) | Correo inexistente: error en el formulario y permanece en `/login` | ✅ |
+| AUTH-03 | Gerente | Salir lleva a `/login`; `/dashboard` e `/inventario` sin sesión redirigen al login | ✅ |
+| ROL-01 | Gerente | `/usuarios`, `/auditoria` y `/ventas/caja` llevan a `/sin-permiso` | ✅ |
+| DASH-01 | Gerente | 8 KPI y gráficos; 7 días, sucursal y categoría recalculan; Restablecer | ✅ |
+| CAT-01 | Gerente | Catálogos de solo lectura, búsqueda y formato del margen | ❌ → ✅ tras DEF-08 |
+| INV-01 | Gerente | Kardex coherente con el stock de la fila | ✅ |
+| VEN-01 | Gerente | Filtros de ventas y totales del detalle | ✅ |
+| OC-01 | Bodega | Crea una orden "TS OC" en BORRADOR, sin opción de aprobar | ✅ |
+| OC-02 | Gerente | Aprueba la orden TS; persiste tras recargar | ✅ |
+| OC-03 | Bodega | Recibe una orden APROBADA; el stock sube y el kardex referencia la orden | ✅ |
+| REP-01 | Gerente | Vista previa de inventario crítico coherente con las alertas del dashboard | ✅ |
+| CHAT-01 | Gerente | Una pregunta respondida con datos del catálogo y la etiqueta de IA | ✅ |
+| CAJA-01 | Cajero | Venta en caja: el stock baja 1, kardex "Venta #N" y la venta aparece en Ventas | ✅ |
+| CLI-01 | Cajero | Registra un cliente TS y rechaza un documento duplicado | ✅ |
+
+**Resultado: 15 de 15** después de corregir el único defecto real. Clasificación de lo que no pasó en la primera ejecución:
+
+- **CAT-01 — defecto funcional (DEF-08).** El margen de Productos aparecía como "21.6 %" en lugar de "21,6 %". Se corrigió en la *release* v0.9.1 (*hotfix*) y se volvió a ejecutar solo CAT-01, que pasó.
+- **AUTH-02, AUTH-03, DASH-01, CAT-01 y ROL-01 bloqueados en las primeras corridas — problema de ambiente (configuración de la herramienta).** Las restricciones que se le dieron al agente para la exploración ("no iniciar ejecuciones hasta revisar el plan", "no enviar formularios") quedaron guardadas en las notas y en las instrucciones del proyecto, y el ejecutor las aplicaba a cada caso. Se eliminaron de las notas y se publicó `project.md` corregido; las nuevas ejecuciones no volvieron a bloquearse. Ningún bloqueo se debió a la app.
+
+**Observaciones.** El periodo del dashboard termina ayer por diseño (lo señaló el agente y se aclaró en la especificación). Los registros que crearon las pruebas llevan el prefijo "TS " (una orden aprobada, una venta de 1 unidad y un cliente), y una orden de demostración de Ceiba Centro pasó a RECIBIDA; los datos de demostración se regeneran con `npm run db:seed` antes de la entrega (Fase 11). Costo: unos 0,5 a 0,8 créditos por caso ejecutado; la mayor parte del consumo fue la exploración y la conversación con el agente.
+
 ## 7. Registro de defectos
 
 | ID | Prueba | Descripción | Clasificación | Corrección | Commit | Estado |
@@ -150,4 +177,5 @@ Cómo se ejecutan las pruebas de los agentes (Fase 7):
 - Todas las pruebas de seguridad con el resultado esperado.
 - Los ocho KPI verificados con su consulta SQL.
 - Las preguntas PRU-C01 a PRU-C08 con respuesta correcta y evidencia.
+- Plan de TestSprite depurado y ejecutado sobre la app desplegada, con cada fallo clasificado: 15 de 15.
 - Defectos reales corregidos y documentados.
