@@ -56,5 +56,5 @@ desktop.ini
 
 # --- Archivos personales / temporales ---
 *.zip
-capturas/
+/capturas/
 tmp/
